@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SECHZGER - Das 1860 RPG</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background: #0F1A2E;
+            color: #E8E8E0;
+            font-family: monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        #gameContainer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        canvas {
+            background: #0F1A2E;
+            border: 2px solid #00529C;
+        }
+        
+        #touchControls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            pointer-events: none;
+        }
+        
+        .dpad {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            pointer-events: all;
+        }
+        
+        .dpad-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 82, 156, 0.7);
+            border: 2px solid #E8E8E0;
+            color: #E8E8E0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        .dpad-up { top: 0; left: 40px; }
+        .dpad-down { bottom: 0; left: 40px; }
+        .dpad-left { top: 40px; left: 0; }
+        .dpad-right { top: 40px; right: 0; }
+        
+        .action-buttons {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            pointer-events: all;
+        }
+        
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 82, 156, 0.7);
+            border: 2px solid #E8E8E0;
+            color: #E8E8E0;
+            font-size: 18px;
+            margin: 5px;
+            display: inline-block;
+            text-align: center;
+            line-height: 46px;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        @media (max-width: 768px) {
+            #touchControls { display: block; }
+        }
+        
+        .dialog-text {
+            font-size: 10px;
+            line-height: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="320" height="288"></canvas>
+    </div>
+    
+    <div id="touchControls">
+        <div class="dpad">
+            <div class="dpad-btn dpad-up" data-key="ArrowUp">↑</div>
+            <div class="dpad-btn dpad-down" data-key="ArrowDown">↓</div>
+            <div class="dpad-btn dpad-left" data-key="ArrowLeft">←</div>
+            <div class="dpad-btn dpad-right" data-key="ArrowRight">→</div>
+        </div>
+        <div class="action-buttons">
+            <div class="action-btn" data-key=" ">A</div>
+            <div class="action-btn" data-key="Escape">B</div>
+        </div>
+    </div>
+
+    <script>
+        // Game Constants
+        const CANVAS_WIDTH = 320;
+        const CANVAS_HEIGHT = 288;
+        const TILE_SIZE = 16;
+        const PLAYER_SPEED = 2;
+        const BATTLE_TRANSITION_TIME = 30;
+        
+        // Colors (Game Boy Color palette)
+        const COLORS = {
+            BACKGROUND: '#0F1A2E',
+            BLUE: '#00529C',
+            WHITE: '#E8E8E0',
+            GOLD: '#C8A832',
+            DARK: '#1A1A1A',
+            GRASS: '#2A6E3A',
+            GRAY: '#808080',
+            RED: '#CC4125',
+            GREEN: '#228B22',
+            BROWN: '#8B4513'
+        };
+        
+        // Game Types
+        const TYPES = {
+            ANGRIFF: 'ANGRIFF',
+            DEFENSIV: 'DEFENSIV', 
+            TECHNIK: 'TECHNIK',
+            TAKTIK: 'TAKTIK',
+            HERZ: 'HERZ'
+        };
+        
+        const TYPE_EFFECTIVENESS = {
+            [TYPES.ANGRIFF]: { strong: [TYPES.DEFENSIV], weak: [TYPES.TAKTIK] },
+            [TYPES.DEFENSIV]: { strong: [TYPES.TECHNIK], weak: [TYPES.ANGRIFF] },
+            [TYPES.TECHNIK]: { strong: [TYPES.TAKTIK], weak: [TYPES.DEFENSIV] },
+            [TYPES.TAKTIK]: { strong: [TYPES.ANGRIFF], weak: [TYPES.TECHNIK] },
+            [TYPES.HERZ]: { strong: [], weak: [] }
+        };
+        
+        // Game States
+        const GAME_STATES = {
+            TITLE: 'TITLE',
+            OVERWORLD: 'OVERWORLD',
+            BATTLE: 'BATTLE',
+            MENU: 'MENU',
+            DIALOG: 'DIALOG'
+        };
+        
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        
+        // Game state
+        let gameState = GAME_STATES.TITLE;
+        let currentMap = 'giesing';
+        let player = {
+            x: 160,
+            y: 200,
+            direction: 'down',
+            isMoving: false,
+            frame: 0,
+            animTimer: 0
+        };
+        
+        let camera = { x: 0, y: 0 };
+        let dialogText = '';
+        let dialogIndex = 0;
+        let showDialog = false;
+        
+        // Player data
+        let playerData = {
+            name: 'Du',
+            team: [],
+            badges: [],
+            items: {
+                'Weißbier': 3,
+                'Grünwalder Rasen': 1
+            },
+            money: 500,
+            arenaProgress: 0
+        };
+        
+        // Input handling
+        const keys = {};
+        const keysPressed = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            keysPressed[e.code] = true;
+            e.preventDefault();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+            e.preventDefault();
+        });
+        
+        // Touch controls
+        document.querySelectorAll('.dpad-btn, .action-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const key = btn.dataset.key;
+                keys[key] = true;
+                keysPressed[key] = true;
+                btn.style.background = 'rgba(200, 168, 50, 0.7)';
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const key = btn.dataset.key;
+                keys[key] = false;
+                btn.style.background = 'rgba(0, 82, 156, 0.7)';
+            });
+        });
+        
+        // Sound system
+        let audioContext;
+        let masterVolume = 0.3;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playTone(frequency, duration, volume = 0.1, type = 'square') {
+            initAudio();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(volume * masterVolume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        function playMenuSound() {
+            playTone(523, 0.1, 0.1);
+        }
+        
+        function playSelectSound() {
+            playTone(659, 0.15, 0.1);
+        }
+        
+        function playBattleStartJingle() {
+            setTimeout(() => playTone(523, 0.1, 0.2), 0);
+            setTimeout(() => playTone(659, 0.1, 0.2), 100);
+            setTimeout(() => playTone(784, 0.1, 0.2), 200);
+            setTimeout(() => playTone(1047, 0.3, 0.2), 300);
+        }
+        
+        function playVictoryJingle() {
+            setTimeout(() => playTone(523, 0.15, 0.2), 0);
+            setTimeout(() => playTone(659, 0.15, 0.2), 150);
+            setTimeout(() => playTone(784, 0.15, 0.2), 300);
+            setTimeout(() => playTone(1047, 0.25, 0.2), 450);
+            setTimeout(() => playTone(1319, 0.4, 0.2), 650);
+        }
+        
+        // Player definitions
+        const PLAYERS = {
+            radi: {
+                name: 'Radi Radenković',
+                type: [TYPES.HERZ, TYPES.DEFENSIV],
+                hp: 120,
+                maxHp: 120,
+                moral: 100,
+                maxMoral: 100,
+                level: 50,
+                moves: [
+                    { name: 'Bin i Radi', type: TYPES.HERZ, power: 0, description: 'Heilt Team-Moral +30%', effect: 'healTeamMoral' },
+                    { name: 'Radis Ausflug', type: TYPES.ANGRIFF, power: 70, description: '50% Chance großer Schaden, 50% Selbstschaden', effect: 'risky' },
+                    { name: 'Schlagerstar', type: TYPES.HERZ, power: 0, description: 'Verwirrt Gegner 2 Runden', effect: 'confuse' },
+                    { name: 'Paradereflex', type: TYPES.DEFENSIV, power: 0, description: 'Blockt nächsten Angriff 100%', effect: 'block' }
+                ],
+                sprite: 'goalkeeper'
+            },
+            brunnenmeier: {
+                name: 'Rudi Brunnenmeier',
+                type: [TYPES.ANGRIFF, TYPES.TECHNIK],
+                hp: 100,
+                maxHp: 100,
+                moral: 80,
+                maxMoral: 80,
+                level: 48,
+                moves: [
+                    { name: 'Blonder Engel', type: TYPES.ANGRIFF, power: 80, description: 'Starker Angriff', effect: 'none' },
+                    { name: 'Dribbelkönig', type: TYPES.TECHNIK, power: 0, description: 'Nächster Angriff trifft garantiert', effect: 'guarantee' },
+                    { name: '155 Tore', type: TYPES.ANGRIFF, power: 60, description: 'Kraft wächst mit Siegen', effect: 'growing' },
+                    { name: 'Tragik', type: TYPES.HERZ, power: 0, description: 'Schwächer bei niedriger Moral', effect: 'tragic' }
+                ],
+                sprite: 'striker'
+            },
+            grosser: {
+                name: 'Peter Grosser',
+                type: [TYPES.TAKTIK, TYPES.HERZ],
+                hp: 110,
+                maxHp: 110,
+                moral: 90,
+                maxMoral: 90,
+                level: 49,
+                moves: [
+                    { name: 'Kapitänsruf', type: TYPES.HERZ, power: 0, description: 'Stärkt Team-Moral +20%', effect: 'boostTeam' },
+                    { name: 'Spielaufbau', type: TYPES.TAKTIK, power: 45, description: 'Schwächt Gegner-Verteidigung 2 Runden', effect: 'weaken' },
+                    { name: 'Grätschen', type: TYPES.DEFENSIV, power: 55, description: 'Mittlerer Schaden + reduziert Geschwindigkeit', effect: 'slow' },
+                    { name: 'Anführer', type: TYPES.HERZ, power: 0, description: 'Team bekommt +10% Moral in allen Kämpfen', effect: 'passive' }
+                ],
+                sprite: 'midfielder'
+            },
+            turner1: {
+                name: 'Heinrich Turner',
+                type: [TYPES.TAKTIK],
+                hp: 80,
+                maxHp: 80,
+                moral: 70,
+                maxMoral: 70,
+                level: 25,
+                moves: [
+                    { name: 'Barrengriff', type: TYPES.TAKTIK, power: 40, description: 'Solider Angriff', effect: 'none' },
+                    { name: 'Turnvater-Weisheit', type: TYPES.HERZ, power: 0, description: 'Heilt eigene HP', effect: 'heal' },
+                    { name: 'Vereinsgeist', type: TYPES.HERZ, power: 0, description: 'Stärkt Moral', effect: 'moralBoost' },
+                    { name: 'Traditionsbewusstsein', type: TYPES.TAKTIK, power: 35, description: 'Ehrt die Geschichte', effect: 'none' }
+                ],
+                sprite: 'turner'
+            }
+        };
+        
+        // Battle system
+        let battleState = {
+            playerTeam: [],
+            enemyTeam: [],
+            currentPlayer: 0,
+            currentEnemy: 0,
+            turn: 'player',
+            selectedMove: -1,
+            battleText: '',
+            animTimer: 0,
+            effects: {
+                player: {},
+                enemy: {}
+            }
+        };
+        
+        // Maps
+        const MAPS = {
+            giesing: {
+                width: 20,
+                height: 15,
+                tiles: [
+                    // Simplified tile map - 0=grass, 1=path, 2=building, 3=tree, 4=npc, 5=arena
+                    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
+                    2,1,0,0,3,3,0,0,1,1,1,0,0,3,3,0,0,1,1,2,
+                    2,1,0,4,0,0,0,0,1,1,1,0,0,0,0,4,0,1,1,2,
+                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
+                    2,1,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,1,2,
+                    2,1,0,3,3,3,0,0,1,1,1,0,0,3,3,3,0,0,1,2,
+                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
+                    2,1,0,0,0,4,0,0,1,1,1,0,0,4,0,0,0,0,1,2,
+                    2,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,2,
+                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
+                    2,1,0,3,0,0,0,0,1,1,1,0,0,0,0,3,0,0,1,2,
+                    2,1,0,0,0,0,3,0,1,1,1,0,3,0,0,0,0,0,1,2,
+                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
+                    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
+                ],
+                npcs: [
+                    { x: 3*16+8, y: 3*16+8, text: "Willkommen in Giesing! Hier begann alles 1860. Die Löwen sind hier zu Hause!" },
+                    { x: 15*16+8, y: 3*16+8, text: "Das Grünwalder Stadion ist unser heiliger Boden. Dort warten große Herausforderungen!" },
+                    { x: 5*16+8, y: 8*16+8, text: "Sammle starke Spieler für dein Team! Ohne eine gute Mannschaft kommst du nicht weit." },
+                    { x: 13*16+8, y: 8*16+8, text: "Die erste Arena ist im Alten Botanischen Garten. Der Turnvater wartet dort auf dich!" }
+                ],
+                arenas: [
+                    { x: 9*16+8, y: 5*16+8, name: 'Arena 1: Die Gründung', id: 'gruendung' }
+                ]
+            }
+        };
+        
+        // Arena definitions
+        const ARENAS = {
+            gruendung: {
+                name: 'Die Gründung',
+                leader: 'Turnvater',
+                badge: 'Gründerlöwe',
+                description: 'Hier begann alles - im Alten Botanischen Garten kämpfst du gegen die Turner der ersten Stunde.',
+                enemies: [
+                    { ...PLAYERS.turner1, name: 'Heinrich Turner' },
+                    { ...PLAYERS.turner1, name: 'Wilhelm Gymast', moves: PLAYERS.turner1.moves },
+                    { ...PLAYERS.turner1, name: 'Franz Turnmeister', moves: PLAYERS.turner1.moves }
+                ],
+                reward: { player: 'turner1', badge: 'gruenderloewe' }
+            }
+        };
+        
+        // Rendering functions
+        function drawPixelRect(x, y, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.floor(x), Math.floor(y), width, height);
+        }
+        
+        function drawPixelSprite(x, y, width, height, colors) {
+            for (let py = 0; py < height; py++) {
+                for (let px = 0; px < width; px++) {
+                    const colorIndex = colors[py * width + px];
+                    if (colorIndex > 0) {
+                        const color = Object.values(COLORS)[colorIndex - 1];
+                        drawPixelRect(x + px, y + py, 1, 1, color);
+                    }
+                }
+            }
+        }
+        
+        function drawPlayer(x, y, direction = 'down', frame = 0) {
+            const size = 16;
+            // Simple 16x16 player sprite
+            const playerSprite = [
+                0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
+                0,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,
+                0,2,2,3,3,2,2,2,2,3,3,2,2,0,0,0,
+                0,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,
+                0,0,2,2,2,1,1,1,1,2,2,2,0,0,0,0,
+                0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,
+                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
+                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
+                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
+                0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,
+                0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,
+                0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,
+                0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,
+                0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,
+                0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,
+                0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0
+            ];
+            
+            if (frame === 1 && direction === 'down') {
+                // Alternate walking frame - just shift legs slightly
+                for (let i = 11 * 16; i < 16 * 16; i++) {
+                    const px = i % 16;
+                    const py = Math.floor(i / 16);
+                    if (px < 8 && playerSprite[i] === 1) {
+                        playerSprite[i + 1] = 1;
+                        playerSprite[i] = 0;
+                    }
+                }
+            }
+            
+            drawPixelSprite(x - 8, y - 8, 16, 16, playerSprite);
+        }
+        
+        function drawNPC(x, y, type = 'citizen') {
+            const npcSprite = [
+                0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
+                0,2,4,4,4,4,4,4,4,4,4,4,2,0,0,0,
+                0,2,4,3,3,4,4,4,4,3,3,4,2,0,0,0,
+                0,2,4,4,4,4,4,4,4,4,4,4,2,0,0,0,
+                0,0,2,2,2,1,1,1,1,2,2,2,0,0,0,0,
+                0,0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,
+                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
+                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
+                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
+                0,0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,
+                0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,0,
+                0,0,0,0,5,5,0,0,5,5,0,0,0,0,0,0,
+                0,0,0,0,5,5,0,0,5,5,0,0,0,0,0,0,
+                0,0,0,5,5,5,0,0,5,5,5,0,0,0,0,0,
+                0,0,5,5,5,0,0,0,0,5,5,5,0,0,0,0,
+                0,5,5,5,0,0,0,0,0,0,5,5,5,0,0,0
+            ];
+            
+            drawPixelSprite(x - 8, y - 8, 16, 16, npcSprite);
+        }
+        
+        function drawTile(x, y, tileType) {
+            const tileX = x * TILE_SIZE;
+            const tileY = y * TILE_SIZE;
+            
+            switch(tileType) {
+                case 0: // Grass
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
+                    // Add some grass texture
+                    for (let i = 0; i < 8; i++) {
+                        const px = Math.floor(Math.random() * TILE_SIZE);
+                        const py = Math.floor(Math.random() * TILE_SIZE);
+                        drawPixelRect(tileX + px, tileY + py, 1, 1, '#1F5F2F');
+                    }
+                    break;
+                case 1: // Path
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.WHITE);
+                    drawPixelRect(tileX + 1, tileY + 1, TILE_SIZE - 2, TILE_SIZE - 2, '#D0D0C0');
+                    break;
+                case 2: // Building
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.BROWN);
+                    drawPixelRect(tileX + 2, tileY + 2, TILE_SIZE - 4, TILE_SIZE - 4, '#A0522D');
+                    break;
+                case 3: // Tree
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
+                    drawPixelRect(tileX + 6, tileY + 10, 4, 6, COLORS.BROWN);
+                    drawPixelRect(tileX + 2, tileY + 2, 12, 10, COLORS.GREEN);
+                    break;
+                case 4: // NPC placeholder
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
+                    break;
+                case 5: // Arena
+                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.BLUE);
+                    drawPixelRect(tileX + 2, tileY + 2, TILE_SIZE - 4, TILE_SIZE - 4, COLORS.GOLD);
+                    break;
+            }
+        }
+        
+        function drawMap() {
+            const currentMapData = MAPS[currentMap];
+            const startX = Math.floor(camera.x / TILE_SIZE);
+            const startY = Math.floor(camera.y / TILE_SIZE);
+            const tilesX = Math.ceil(CANVAS_WIDTH / TILE_SIZE) + 2;
+            const tilesY = Math.ceil(CANVAS_HEIGHT / TILE_SIZE) + 2;
+            
+            for (let ty = 0; ty < tilesY; ty++) {
+                for (let tx = 0; tx < tilesX; tx++) {
+                    const mapX = startX + tx;
+                    const mapY = startY + ty;
+                    
+                    if (mapX >= 0 && mapX < currentMapData.width && mapY >= 0 && mapY < currentMapData.height) {
+                        const tileType = currentMapData.tiles[mapY * currentMapData.width + mapX];
+                        drawTile(tx * TILE_SIZE - (camera.x % TILE_SIZE), ty * TILE_SIZE - (camera.y % TILE_SIZE), tileType);
+                    }
+                }
+            }
+            
+            // Draw NPCs
+            currentMapData.npcs.forEach(npc => {
+                const screenX = npc.x - camera.x;
+                const screenY = npc.y - camera.y;
+                if (screenX > -16 && screenX < CANVAS_WIDTH + 16 && screenY > -16 && screenY < CANVAS_HEIGHT + 16) {
+                    drawNPC(screenX, screenY);
+                }
+            });
+            
+            // Draw arenas
+            currentMapData.arenas.forEach(arena => {
+                const screenX = arena.x - camera.x;
+                const screenY = arena.y - camera.y;
+                if (screenX > -16 && screenX < CANVAS_WIDTH + 16 && screenY > -16 && screenY < CANVAS_HEIGHT + 16) {
+                    // Arena building sprite
+                    drawPixelRect(screenX - 16, screenY - 16, 32, 32, COLORS.BLUE);
+                    drawPixelRect(screenX - 12, screenY - 12, 24, 24, COLORS.GOLD);
+                    drawPixelRect(screenX - 8, screenY - 8, 16, 16, COLORS.WHITE);
+                }
+            });
+        }
+        
+        function drawText(text, x, y, size = 10, color = COLORS.WHITE, maxWidth = null) {
+            ctx.fillStyle = color;
+            ctx.font = `${size}px monospace`;
+            
+            if (maxWidth) {
+                const words = text.split(' ');
+                let line = '';
+                let lineY = y;
+                
+                words.forEach(word => {
+                    const testLine = line + word + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    
+                    if (metrics.width > maxWidth && line !== '') {
+                        ctx.fillText(line.trim(), x, lineY);
+                        line = word + ' ';
+                        lineY += size + 2;
+                    } else {
+                        line = testLine;
+                    }
+                });
+                
+                if (line.trim() !== '') {
+                    ctx.fillText(line.trim(), x, lineY);
+                }
+            } else {
+                ctx.fillText(text, x, y);
+            }
+        }
+        
+        function drawDialogBox(text) {
+            const boxHeight = 80;
+            const boxY = CANVAS_HEIGHT - boxHeight;
+            
+            // Dialog box background
+            drawPixelRect(10, boxY, CANVAS_WIDTH - 20, boxHeight - 10, COLORS.WHITE);
+            drawPixelRect(12, boxY + 2, CANVAS_WIDTH - 24, boxHeight - 14, COLORS.BACKGROUND);
+            
+            // Text
+            drawText(text, 20, boxY + 20, 10, COLORS.WHITE, CANVAS_WIDTH - 40);
+        }
+        
+        function drawBattleScreen() {
+            // Background
+            ctx.fillStyle = COLORS.GRASS;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT * 0.6);
+            
+            ctx.fillStyle = COLORS.BACKGROUND;
+            ctx.fillRect(0, CANVAS_HEIGHT * 0.6, CANVAS_WIDTH, CANVAS_HEIGHT * 0.4);
+            
+            // Player and enemy sprites
+            if (battleState.playerTeam[battleState.currentPlayer]) {
+                drawBattleSprite(60, CANVAS_HEIGHT * 0.7, battleState.playerTeam[battleState.currentPlayer], false);
+                drawHealthBar(20, CANVAS_HEIGHT * 0.8, battleState.playerTeam[battleState.currentPlayer], true);
+            }
+            
+            if (battleState.enemyTeam[battleState.currentEnemy]) {
+                drawBattleSprite(CANVAS_WIDTH - 60, CANVAS_HEIGHT * 0.3, battleState.enemyTeam[battleState.currentEnemy], true);
+                drawHealthBar(CANVAS_WIDTH - 120, CANVAS_HEIGHT * 0.1, battleState.enemyTeam[battleState.currentEnemy], false);
+            }
+            
+            // Battle UI
+            if (battleState.turn === 'player' && battleState.selectedMove === -1) {
+                drawMoveSelection();
+            }
+            
+            if (battleState.battleText) {
+                drawDialogBox(battleState.battleText);
+            }
+        }
+        
+        function drawBattleSprite(x, y, player, isEnemy) {
+            const size = 48;
+            // Simple battle sprite - larger version of overworld sprite
+            const colors = [
+                0,0,0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,2,2,2,2,2,2,2,2,
+                0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,2,2,2,2,2,2,2,2,2
+                // ... simplified for brevity, would be full 48x48 sprite
+            ];
+            
+            // Color based on player type
+            const primaryColor = player.type.includes(TYPES.HERZ) ? COLORS.GOLD : 
+                               player.type.includes(TYPES.ANGRIFF) ? COLORS.RED :
+                               player.type.includes(TYPES.DEFENSIV) ? COLORS.BLUE :
+                               player.type.includes(TYPES.TECHNIK) ? COLORS.GREEN : COLORS.GRAY;
+            
+            drawPixelRect(x - 24, y - 24, 48, 48, primaryColor);
+            drawPixelRect(x - 20, y - 20, 40, 40, COLORS.WHITE);
+            
+            // Name
+            drawText(player.name, x - 40, y - 40, 8, COLORS.WHITE);
+        }
+        
+        function drawHealthBar(x, y, player, showMoral = false) {
+            const barWidth = 100;
+            const barHeight = 6;
+            
+            // HP Bar
+            drawPixelRect(x, y, barWidth, barHeight, COLORS.DARK);
+            const hpPercent = player.hp / player.maxHp;
+            const hpColor = hpPercent > 0.5 ? COLORS.GREEN : hpPercent > 0.2 ? COLORS.GOLD : COLORS.RED;
+            drawPixelRect(x + 1, y + 1, (barWidth - 2) * hpPercent, barHeight - 2, hpColor);
+            
+            drawText(`HP: ${player.hp}/${player.maxHp}`, x, y - 10, 8, COLORS.WHITE);
+            
+            if (showMoral) {
+                // Moral Bar
+                const moralY = y + 15;
+                drawPixelRect(x, moralY, barWidth, barHeight, COLORS.DARK);
+                const moralPercent = player.moral / player.maxMoral;
+                const moralColor = moralPercent > 0.5 ? COLORS.BLUE : moralPercent > 0.2 ? COLORS.GOLD : COLORS.RED;
+                drawPixelRect(x + 1, moralY + 1, (barWidth - 2) * moralPercent, barHeight - 2, moralColor);
+                
+                drawText(`Moral: ${player.moral}/${player.maxMoral}`, x, moralY - 10, 8, COLORS.WHITE);
+            }
+        }
+        
+        function drawMoveSelection() {
+            const player = battleState.playerTeam[battleState.currentPlayer];
+            const boxY = CANVAS_HEIGHT - 100;
+            const boxHeight = 90;
+            
+            drawPixelRect(10, boxY, CANVAS_WIDTH - 20, boxHeight, COLORS.WHITE);
+            drawPixelRect(12, boxY + 2, CANVAS_WIDTH - 24, boxHeight - 4, COLORS.BACKGROUND);
+            
+            drawText("Wähle einen Zug:", 20, boxY + 20, 10, COLORS.WHITE);
+            
+            player.moves.forEach((move, index) => {
+                const moveX = 20 + (index % 2) * 140;
+                const moveY = boxY + 40 + Math.floor(index / 2) * 20;
+                
+                const color = battleState.selectedMove === index ? COLORS.GOLD : COLORS.WHITE;
+                drawText(`${index + 1}. ${move.name}`, moveX, moveY, 9, color);
+            });
+        }
+        
+        function drawTitleScreen() {
+            // Background
+            ctx.fillStyle = COLORS.BACKGROUND;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Title
+            drawText("SECHZGER", CANVAS_WIDTH/2 - 50, 80, 20, COLORS.GOLD);
+            drawText("Das 1860 RPG", CANVAS_WIDTH/2 - 45, 110, 12, COLORS.WHITE);
+            
+            // Subtitle
+            drawText("Ein Pokémon-Style Abenteuer", CANVAS_WIDTH/2 - 80, 140, 10, COLORS.BLUE);
+            drawText("durch die Geschichte des", CANVAS_WIDTH/2 - 75, 155, 10, COLORS.BLUE);
+            drawText("TSV 1860 München", CANVAS_WIDTH/2 - 50, 170, 10, COLORS.BLUE);
+            
+            // Instructions
+            drawText("Drücke LEERTASTE zum Starten", CANVAS_WIDTH/2 - 90, 220, 10, COLORS.WHITE);
+            
+            // Logo (simplified)
+            drawPixelRect(CANVAS_WIDTH/2 - 15, 30, 30, 30, COLORS.BLUE);
+            drawPixelRect(CANVAS_WIDTH/2 - 10, 35, 20, 20, COLORS.GOLD);
+            drawText("1860", CANVAS_WIDTH/2 - 12, 52, 8, COLORS.WHITE);
+        }
+        
+        // Game logic functions
+        function updatePlayer() {
+            if (gameState !== GAME_STATES.OVERWORLD) return;
+            
+            let newX = player.x;
+            let newY = player.y;
+            let isMoving = false;
+            
+            if (keys['KeyW'] || keys['ArrowUp']) {
+                newY -= PLAYER_SPEED;
+                player.direction = 'up';
+                isMoving = true;
+            }
+            if (keys['KeyS'] || keys['ArrowDown']) {
+                newY += PLAYER_SPEED;
+                player.direction = 'down';
+                isMoving = true;
+            }
+            if (keys['KeyA'] || keys['ArrowLeft']) {
+                newX -= PLAYER_SPEED;
+                player.direction = 'left';
+                isMoving = true;
+            }
+            if (keys['KeyD'] || keys['ArrowRight']) {
+                newX += PLAYER_SPEED;
+                player.direction = 'right';
+                isMoving = true;
+            }
+            
+            // Collision detection
+            if (canMoveTo(newX, newY)) {
+                player.x = newX;
+                player.y = newY;
+                player.isMoving = isMoving;
+                
+                // Update camera
+                camera.x = player.x - CANVAS_WIDTH / 2;
+                camera.y = player.y - CANVAS_HEIGHT / 2;
+                
+                // Keep camera in bounds
+                const mapData = MAPS[currentMap];
+                camera.x = Math.max(0, Math.min(camera.x, mapData.width * TILE_SIZE - CANVAS_WIDTH));
+                camera.y = Math.max(0, Math.min(camera.y, mapData.height * TILE_SIZE - CANVAS_HEIGHT));
+            }
+            
+            // Animation
+            if (isMoving) {
+                player.animTimer += 1;
+                if (player.animTimer >= 15) {
+                    player.frame = 1 - player.frame;
+                    player.animTimer = 0;
+                }
+            } else {
+                player.frame = 0;
+            }
+            
+            // Interaction
+            if (keysPressed[' ']) {
+                checkInteractions();
+                keysPressed[' '] = false;
+            }
+        }
+        
+        function canMoveTo(x, y) {
+            const mapData = MAPS[currentMap];
+            const tileX = Math.floor(x / TILE_SIZE);
+            const tileY = Math.floor(y / TILE_SIZE);
+            
+            if (tileX < 0 || tileX >= mapData.width || tileY < 0 || tileY >= mapData.height) {
+                return false;
+            }
+            
+            const tileType = mapData.tiles[tileY * mapData.width + tileX];
+            return tileType !== 2 && tileType !== 3; // Can't walk through buildings or trees
+        }
+        
+        function checkInteractions() {
+            const mapData = MAPS[currentMap];
+            const interactionDistance = 20;
+            
+            // Check NPCs
+            mapData.npcs.forEach(npc => {
+                const distance = Math.sqrt(Math.pow(player.x - npc.x, 2) + Math.pow(player.y - npc.y, 2));
+                if (distance < interactionDistance) {
+                    showDialog = true;
+                    dialogText = npc.text;
+                    gameState = GAME_STATES.DIALOG;
+                    playMenuSound();
+                }
+            });
+            
+            // Check arenas
+            mapData.arenas.forEach(arena => {
+                const distance = Math.sqrt(Math.pow(player.x - arena.x, 2) + Math.pow(player.y - arena.y, 2));
+                if (distance < interactionDistance) {
+                    if (playerData.arenaProgress >= Object.keys(ARENAS).indexOf(arena.id)) {
+                        startBattle(arena.id);
+                    } else {
+                        showDialog = true;
+                        dialogText = "Du musst zuerst die vorherigen Arenen besiegen!";
+                        gameState = GAME_STATES.DIALOG;
+                        playMenuSound();
+                    }
+                }
+            });
+        }
+        
+        function startBattle(arenaId) {
+            const arena = ARENAS[arenaId];
+            if (!arena) return;
+            
+            gameState = GAME_STATES.BATTLE;
+            
+            // Initialize player team (for demo, give starter team)
+            if (playerData.team.length === 0) {
+                playerData.team.push({...PLAYERS.turner1});
+            }
+            
+            battleState.playerTeam = [...playerData.team];
+            battleState.enemyTeam = [...arena.enemies];
+            battleState.currentPlayer = 0;
+            battleState.currentEnemy = 0;
+            battleState.turn = 'player';
+            battleState.selectedMove = -1;
+            battleState.battleText = `${arena.leader} fordert dich heraus!`;
+            battleState.effects = { player: {}, enemy: {} };
+            
+            playBattleStartJingle();
+        }
+        
+        function updateBattle() {
+            if (gameState !== GAME_STATES.BATTLE) return;
+            
+            if (battleState.turn === 'player') {
+                // Handle move selection
+                if (keysPressed['Digit1']) {
+                    battleState.selectedMove = 0;
+                    keysPressed['Digit1'] = false;
+                }
+                if (keysPressed['Digit2']) {
+                    battleState.selectedMove = 1;
+                    keysPressed['Digit2'] = false;
+                }
+                if (keysPressed['Digit3']) {
+                    battleState.selectedMove = 2;
+                    keysPressed['Digit3'] = false;
+                }
+                if (keysPressed['Digit4']) {
+                    battleState.selectedMove = 3;
+                    keysPressed['Digit4'] = false;
+                }
+                
+                if (battleState.selectedMove >= 0) {
+                    executePlayerMove();
+                }
+            }
+            
+            // Continue battle text with spacebar
+            if (keysPressed[' '] && battleState.battleText) {
+                keysPressed[' '] = false;
+                
+                if (battleState.turn === 'enemy') {
+                    executeEnemyMove();
+                } else if (battleState.turn === 'checkEnd') {
+                    checkBattleEnd();
+                } else {
+                    battleState.battleText = '';
+                }
+            }
+        }
+        
+        function executePlayerMove() {
+            const player = battleState.playerTeam[battleState.currentPlayer];
+            const enemy = battleState.enemyTeam[battleState.currentEnemy];
+            const move = player.moves[battleState.selectedMove];
+            
+            playSelectSound();
+            
+            let damage = 0;
+            battleState.battleText = `${player.name} setzt ${move.name} ein!`;
+            
+            // Calculate damage and effects
+            if (move.power > 0) {
+                damage = move.power;
+                
+                // Type effectiveness
+                const effectiveness = getTypeEffectiveness(move.type, enemy.type[0]);
+                damage = Math.floor(damage * effectiveness);
+                
+                // Moral affects accuracy
+                const accuracy = 0.7 + (player.moral / player.maxMoral) * 0.3;
+                const hitChance = Math.random();
+                
+                if (hitChance <= accuracy) {
+                    enemy.hp = Math.max(0, enemy.hp - damage);
+                    
+                    if (effectiveness > 1) {
+                        battleState.battleText += " Es ist sehr effektiv!";
+                    } else if (effectiveness < 1) {
+                        battleState.battleText += " Es ist nicht sehr effektiv...";
+                    }
+                } else {
+                    battleState.battleText += " Der Angriff geht daneben!";
+                }
+            }
+            
+            // Handle special effects
+            handleMoveEffect(move, player, enemy, true);
+            
+            battleState.selectedMove = -1;
+            battleState.turn = 'enemy';
+        }
+        
+        function executeEnemyMove() {
+            const player = battleState.playerTeam[battleState.currentPlayer];
+            const enemy = battleState.enemyTeam[battleState.currentEnemy];
+            const moveIndex = Math.floor(Math.random() * enemy.moves.length);
+            const move = enemy.moves[moveIndex];
+            
+            let damage = 0;
+            battleState.battleText = `${enemy.name} setzt ${move.name} ein!`;
+            
+            if (move.power > 0) {
+                damage = move.power;
+                
+                const effectiveness = getTypeEffectiveness(move.type, player.type[0]);
+                damage = Math.floor(damage * effectiveness);
+                
+                const accuracy = 0.7 + (enemy.moral / enemy.maxMoral) * 0.3;
+                const hitChance = Math.random();
+                
+                if (hitChance <= accuracy) {
+                    player.hp = Math.max(0, player.hp - damage);
+                    
+                    if (effectiveness > 1) {
+                        battleState.battleText += " Es ist sehr effektiv!";
+                    } else if (effectiveness < 1) {
+                        battleState.battleText += " Es ist nicht sehr effektiv...";
+                    }
+                } else {
+                    battleState.battleText += " Der Angriff geht daneben!";
+                }
+            }
+            
+            handleMoveEffect(move, enemy, player, false);
+            
+            battleState.turn = 'checkEnd';
+        }
+        
+        function getTypeEffectiveness(attackType, defendType) {
+            if (attackType === TYPES.HERZ) return 1;
+            
+            const typeData = TYPE_EFFECTIVENESS[attackType];
+            if (typeData.strong.includes(defendType)) return 1.5;
+            if (typeData.weak.includes(defendType)) return 0.67;
+            return 1;
+        }
+        
+        function handleMoveEffect(move, attacker, target, isPlayer) {
+            switch(move.effect) {
+                case 'healTeamMoral':
+                    battleState.playerTeam.forEach(p => {
+                        p.moral = Math.min(p.maxMoral, p.moral + 30);
+                    });
+                    battleState.battleText += ` Das Team wird ermutigt!`;
+                    break;
+                    
+                case 'confuse':
+                    if (isPlayer) {
+                        battleState.effects.enemy.confused = 2;
+                    } else {
+                        battleState.effects.player.confused = 2;
+                    }
+                    battleState.battleText += ` ${target.name} ist verwirrt!`;
+                    break;
+                    
+                case 'heal':
+                    attacker.hp = Math.min(attacker.maxHp, attacker.hp + 40);
+                    battleState.battleText += ` ${attacker.name} wurde geheilt!`;
+                    break;
+                    
+                case 'moralBoost':
+                    attacker.moral = Math.min(attacker.maxMoral, attacker.moral + 25);
+                    battleState.battleText += ` ${attacker.name} fühlt sich besser!`;
+                    break;
+            }
+        }
+        
+        function checkBattleEnd() {
+            const player = battleState.playerTeam[battleState.currentPlayer];
+            const enemy = battleState.enemyTeam[battleState.currentEnemy];
+            
+            if (player.hp <= 0) {
+                battleState.battleText = `${player.name} ist kampfunfähig!`;
+                player.moral = Math.max(0, player.moral - 20);
+                
+                // Check if player has more team members
+                const alivePlayer = battleState.playerTeam.find(p => p.hp > 0);
+                if (alivePlayer) {
+                    battleState.currentPlayer = battleState.playerTeam.indexOf(alivePlayer);
+                    battleState.turn = 'player';
+                } else {
+                    // Player loses
+                    battleState.battleText = "Du hast verloren! Dein Team braucht Erholung.";
+                    setTimeout(() => {
+                        gameState = GAME_STATES.OVERWORLD;
+                        // Heal team slightly
+                        battleState.playerTeam.forEach(p => {
+                            p.hp = Math.floor(p.maxHp * 0.3);
+                            p.moral = Math.max(20, p.moral - 10);
+                        });
+                        playerData.team = battleState.playerTeam;
+                    }, 3000);
+                }
+            } else if (enemy.hp <= 0) {
+                battleState.battleText = `${enemy.name} ist besiegt!`;
+                enemy.moral = Math.max(0, enemy.moral - 30);
+                player.moral = Math.min(player.maxMoral, player.moral + 15);
+                
+                // Check if enemy has more team members
+                const aliveEnemy = battleState.enemyTeam.find(e => e.hp > 0);
+                if (aliveEnemy) {
+                    battleState.currentEnemy = battleState.enemyTeam.indexOf(aliveEnemy);
+                    battleState.turn = 'player';
+                } else {
+                    // Player wins
+                    playVictoryJingle();
+                    battleState.battleText = "Du hast gewonnen! Du hast die Arena besiegt!";
+                    playerData.arenaProgress++;
+                    
+                    // Add reward player to team
+                    const arenaKey = Object.keys(ARENAS)[playerData.arenaProgress - 1];
+                    const arena = ARENAS[arenaKey];
+                    if (arena && arena.reward.player) {
+                        const newPlayer = {...PLAYERS[arena.reward.player]};
+                        newPlayer.name = `Rekrutierter ${newPlayer.name}`;
+                        playerData.team.push(newPlayer);
+                        battleState.battleText += ` ${newPlayer.name} schließt sich deinem Team an!`;
+                    }
+                    
+                    setTimeout(() => {
+                        gameState = GAME_STATES.OVERWORLD;
+                        playerData.team = battleState.playerTeam;
+                        saveGameData();
+                    }, 5000);
+                }
+            } else {
+                battleState.turn = 'player';
+            }
+        }
+        
+        function updateDialog() {
+            if (keysPressed[' ']) {
+                showDialog = false;
+                gameState = GAME_STATES.OVERWORLD;
+                keysPressed[' '] = false;
+            }
+        }
+        
+        function saveGameData() {
+            localStorage.setItem('sechzger_save', JSON.stringify(playerData));
+        }
+        
+        function loadGameData() {
+            const saved = localStorage.getItem('sechzger_save');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    playerData = {...playerData, ...data};
+                } catch (e) {
+                    console.log('Could not load save data');
+                }
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Clear screen
+            ctx.fillStyle = COLORS.BACKGROUND;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            switch(gameState) {
+                case GAME_STATES.TITLE:
+                    drawTitleScreen();
+                    if (keysPressed[' ']) {
+                        gameState = GAME_STATES.OVERWORLD;
+                        loadGameData();
+                        keysPressed[' '] = false;
+                        playSelectSound();
+                    }
+                    break;
+                    
+                case GAME_STATES.OVERWORLD:
+                    updatePlayer();
+                    drawMap();
+                    drawPlayer(player.x - camera.x, player.y - camera.y, player.direction, player.frame);
+                    break;
+                    
+                case GAME_STATES.BATTLE:
+                    updateBattle();
+                    drawBattleScreen();
+                    break;
+                    
+                case GAME_STATES.DIALOG:
+                    updateDialog();
+                    drawMap();
+                    drawPlayer(player.x - camera.x, player.y - camera.y, player.direction, player.frame);
+                    drawDialogBox(dialogText);
+                    break;
+            }
+            
+            // Reset key presses
+            Object.keys(keysPressed).forEach(key => {
+                keysPressed[key] = false;
+            });
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Scale canvas to fit screen
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            const rect = container.getBoundingClientRect();
+            const scaleX = window.innerWidth / CANVAS_WIDTH;
+            const scaleY = window.innerHeight / CANVAS_HEIGHT;
+            const scale = Math.min(scaleX, scaleY) * 0.9; // Leave some margin
+            
+            container.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Start the game
+        gameLoop();
+        
+        // Initialize first player in team if empty
+        if (playerData.team.length === 0) {
+            playerData.team.push({...PLAYERS.turner1});
+        }
+        
+        console.log('SECHZGER - Das 1860 RPG geladen!');
+    </script>
+</body>
+</html>
