@@ -152,7 +152,8 @@ const MOVES={
   roterrauch:{name:'Roter Rauch',type:'TAKTIK',power:35,acc:80,desc:'Bengalo! Verwirrt den Gegner.'},
   miasamia:{name:'Mia san Mia',type:'HERZ',power:0,acc:100,desc:'Arroganter Schlachtruf. +Angriff.',stat:'atk',boost:2},
   schubser:{name:'Schubser',type:'ANGRIFF',power:30,acc:95,desc:'Rüpelhafter Rempler'},
-  bierbecher:{name:'Bierbecher',type:'ANGRIFF',power:40,acc:80,desc:'Wirft einen Becher!'}
+  bierbecher:{name:'Bierbecher',type:'ANGRIFF',power:40,acc:80,desc:'Wirft einen Becher!'},
+  bombe:{name:'Bombe verteilen',type:'ANGRIFF',power:60,acc:70,desc:'Verteilt Bomben! Großer Schaden an allen.',moralDmg:10}
 };
 
 // === PLAYER DEFINITIONS ===
@@ -213,16 +214,16 @@ const PLAYERS=[
   {id:'bayernfan3',name:'Schickeria-Typ',types:['TAKTIK','TECHNIK'],baseHp:40,baseAtk:35,baseDef:30,baseSpd:42,
     moves:['roterrauch','schalklau','pressing','taktikfoul'],desc:'Arroganter Edel-Fan',era:0},
   {id:'bayernultra',name:'Bayern-Ultra',types:['ANGRIFF','HERZ'],baseHp:48,baseAtk:48,baseDef:32,baseSpd:35,
-    moves:['bierbecher','schalklau','blutgrätsche','miasamia'],desc:'Harter Bayern-Ultra',era:0},
+    moves:['bombe','schalklau','blutgrätsche','miasamia'],desc:'Harter Bayern-Ultra',era:0},
   // Bayern fans for era 1-4 (wild encounters in each era)
   {id:'bayernfan_alt',name:'Roter Rivale 1848',types:['TAKTIK'],baseHp:36,baseAtk:34,baseDef:30,baseSpd:32,
     moves:['schubser','pfiff','taktikfoul','schalklau'],desc:'Rivale aus der Gründerzeit',era:1},
   {id:'bayernfan_66',name:'Roter Rivale 1966',types:['ANGRIFF','TAKTIK'],baseHp:44,baseAtk:44,baseDef:28,baseSpd:40,
     moves:['schalklau','bierbecher','pressing','miasamia'],desc:'Neidischer Bayern-Fan der 60er',era:2},
   {id:'bayernfan_94',name:'Roter Rivale 1994',types:['HERZ','ANGRIFF'],baseHp:48,baseAtk:46,baseDef:32,baseSpd:38,
-    moves:['schalklau','roterrauch','bierbecher','pfiff'],desc:'Überheblicher Bayern-Fan der 90er',era:3},
+    moves:['schalklau','bombe','bierbecher','pfiff'],desc:'Überheblicher Bayern-Fan der 90er',era:3},
   {id:'bayernfan_now',name:'Roter Rivale 2024',types:['ANGRIFF','TECHNIK'],baseHp:52,baseAtk:50,baseDef:35,baseSpd:40,
-    moves:['schalklau','miasamia','bierbecher','roterrauch'],desc:'Moderner Bayern-Bonze',era:4}
+    moves:['bombe','miasamia','schalklau','roterrauch'],desc:'Moderner Bayern-Bonze',era:4}
 ];
 
 function makePlayerInstance(id,level){
