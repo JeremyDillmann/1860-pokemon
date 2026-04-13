@@ -153,7 +153,8 @@ const MOVES={
   miasamia:{name:'Mia san Mia',type:'HERZ',power:0,acc:100,desc:'Arroganter Schlachtruf. +Angriff.',stat:'atk',boost:2},
   schubser:{name:'Schubser',type:'ANGRIFF',power:30,acc:95,desc:'Rüpelhafter Rempler'},
   bierbecher:{name:'Bierbecher',type:'ANGRIFF',power:40,acc:80,desc:'Wirft einen Becher!'},
-  bombe:{name:'Bombe verteilen',type:'ANGRIFF',power:60,acc:70,desc:'Verteilt Bomben! Großer Schaden an allen.',moralDmg:10}
+  bombe:{name:'Bombe verteilen',type:'ANGRIFF',power:60,acc:70,desc:'Verteilt Bomben! Großer Schaden an allen.',moralDmg:10},
+  baseballschlaeger:{name:'Baseballschläger',type:'ANGRIFF',power:55,acc:80,desc:'Volle Breitseite mit dem Schläger!',moralDmg:10}
 };
 
 // === PLAYER DEFINITIONS ===
@@ -622,6 +623,52 @@ function makeNPCSprite(hairColor,shirtColor,pantColor){
   return cv;
 }
 
+// === POLIZEI SPRITE ===
+function makePolizeiSprite(){
+  const cv=document.createElement('canvas');cv.width=16;cv.height=16;
+  const cx=cv.getContext('2d');
+  // Car body
+  cx.fillStyle='#e8e8e0';
+  cx.fillRect(2,4,12,8);
+  // Green stripe (Polizei)
+  cx.fillStyle='#2a8a2a';
+  cx.fillRect(2,7,12,3);
+  // Roof light
+  cx.fillStyle='#2a6aac';
+  cx.fillRect(6,2,2,2);
+  cx.fillStyle='#c04040';
+  cx.fillRect(8,2,2,2);
+  // Windows
+  cx.fillStyle='#6abadc';
+  cx.fillRect(3,4,4,3);cx.fillRect(9,4,4,3);
+  // Wheels
+  cx.fillStyle='#081820';
+  cx.fillRect(3,12,3,2);cx.fillRect(10,12,3,2);
+  // POLIZEI text hint
+  cx.fillStyle='#081820';
+  cx.fillRect(5,8,6,1);
+  return cv;
+}
+
+// === GRAFFITI OVERLAY ===
+// Draws small "1860" graffiti next to buildings
+function drawGraffiti(cx,x,y){
+  cx.fillStyle='#2a6aac';
+  // "1860" in tiny pixel font (4px tall)
+  // 1
+  cx.fillRect(x,y,1,4);
+  // 8
+  cx.fillRect(x+2,y,2,1);cx.fillRect(x+2,y+1,1,1);cx.fillRect(x+4,y+1,1,1);
+  cx.fillRect(x+2,y+2,2,1);cx.fillRect(x+2,y+3,2,1);cx.fillRect(x+4,y+3,1,1);
+  // 6
+  cx.fillRect(x+6,y,2,1);cx.fillRect(x+6,y+1,1,1);
+  cx.fillRect(x+6,y+2,2,1);cx.fillRect(x+6,y+3,2,1);cx.fillRect(x+8,y+3,1,1);
+  // 0
+  cx.fillRect(x+10,y,2,1);cx.fillRect(x+10,y+3,2,1);
+  cx.fillRect(x+10,y+1,1,1);cx.fillRect(x+12,y+1,1,1);
+  cx.fillRect(x+10,y+2,1,1);cx.fillRect(x+12,y+2,1,1);
+}
+
 // === BATTLE SPRITES (48x48) ===
 function makeBattleSprite(id){
   const cv=document.createElement('canvas');cv.width=48;cv.height=48;
@@ -756,6 +803,43 @@ function generateMap(idx){
     map[15][27]=6;portals.push({x:27,y:15,toMap:4,toX:15,toY:17,label:'2024'});
     // signs near portals
     map[6][3]=8;map[6][27]=8;map[16][3]=8;map[16][27]=8;
+
+    // === KNEIPENSTRASSE (unten Mitte) ===
+    // Kleine Straße von y=13 bis y=17 bei x=8..12
+    for(let y=13;y<=17;y++){map[y][10]=2;map[y][11]=2;}
+    // Schönstüberl (links oben)
+    map[13][8]=4;map[13][9]=4;map[14][8]=4;map[14][9]=4;
+    // Trepperlwirt (links unten)
+    map[16][8]=4;map[16][9]=4;map[17][8]=4;map[17][9]=4;
+    // Kastaniengarten (rechts oben)
+    map[13][12]=4;map[13][13]=4;map[14][12]=4;map[14][13]=4;
+    // Kyso (rechts unten)
+    map[16][12]=4;map[16][13]=4;map[17][12]=4;map[17][13]=4;
+
+    // Kneipen-NPCs - Löwenfans als Türsteher in Blau mit Baseballschläger
+    npcs.push({x:10,y:15,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#1a3a5c'),
+      dialog:['Willkommen in der Kneipenstraße!','Links das Schönstüberl und der','Trepperlwirt, rechts der','Kastaniengarten und das Kyso!','Hier trinken echte Löwen!'],
+      name:'Wirt Sepp'});
+    npcs.push({x:9,y:14,sprite:makeNPCSprite('#081820','#2a6aac','#1a3a5c'),
+      dialog:['Schönstüberl! Hier kommt','kein Bayern-Schwein rein!','Ich hab meinen Baseballschläger','immer dabei! Einmal Löwe!'],
+      name:'Löwenfan Schönstüberl'});
+    npcs.push({x:9,y:16,sprite:makeNPCSprite('#e8d840','#2a6aac','#1a3a5c'),
+      dialog:['Trepperlwirt - Hier sitzen','nur echte Sechzger!','Wehe ein Roter kommt vorbei,','dann gibts den Schläger!'],
+      name:'Löwenfan Trepperlwirt'});
+    npcs.push({x:12,y:14,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#1a3a5c'),
+      dialog:['Kastaniengarten! Rudi war','hier Stammgast!','Ich bewache den Laden mit','meinem Baseballschläger!'],
+      name:'Löwenfan Kastaniengarten'});
+    npcs.push({x:12,y:16,sprite:makeNPCSprite('#c0a060','#2a6aac','#1a3a5c'),
+      dialog:['Kyso! Klein aber fein!','Kein Bayern-Schwein traut sich','hierher! Wer es versucht,','kriegt den Schläger zu spüren!'],
+      name:'Löwenfan Kyso'});
+    // Polizeiautos auf der Straße (als NPCs die sich nicht bewegen)
+    npcs.push({x:10,y:12,sprite:makePolizeiSprite(),
+      dialog:['Polizei! Alles ruhig hier?','Wir haben Berichte über','Bayern-Fans im Viertel...','Passt auf euch auf!'],
+      name:'Polizeiauto 1'});
+    npcs.push({x:11,y:18,sprite:makePolizeiSprite(),
+      dialog:['Streifenwagen im Einsatz!','Wir sorgen für Ordnung','in der Kneipenstraße.','Sechzger-Viertel ist sicher!'],
+      name:'Polizeiauto 2'});
+
     // NPCs
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#e8e8e0'),
       dialog:['Willkommen in Giesing!','Hier ist das Herz von 1860.','Betritt die Zeitportale, um die','Geschichte von 1860 zu retten!'],
@@ -1323,6 +1407,17 @@ function drawOverworld(){
       else if(tile===8)tc=TILE_CACHE.sign;
       if(tc)CTX.drawImage(tc,sx,sy);
     }
+  }
+
+  // Draw 1860 Graffiti next to Kneipen buildings (only on Giesing map)
+  if(GS.map===0){
+    const graffitiSpots=[[7,13],[7,16],[13,13],[13,16]]; // next to each Kneipe
+    graffitiSpots.forEach(([gx,gy])=>{
+      const sx=gx*TW-camX,sy=gy*TH-camY;
+      if(sx>-TW&&sx<W+TW&&sy>-TH&&sy<H+TH){
+        drawGraffiti(CTX,sx+1,sy+6);
+      }
+    });
   }
 
   // Draw NPCs
