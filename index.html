@@ -1805,7 +1805,7 @@ function drawTransition(){
 
 // === DIALOG ===
 function startDialog(lines,cb){
-  GS._prevMode=GS.mode;
+  if(GS.mode!=='dialog') GS._prevMode=GS.mode;
   GS.mode='dialog';
   GS.dialogLines=lines;
   GS.dialogIdx=0;
