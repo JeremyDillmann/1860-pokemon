@@ -140,7 +140,14 @@ const MOVES={
   schwinger:{name:'Schwinger',type:'ANGRIFF',power:40,acc:85,desc:'Weiter Schwinger'},
   ringkampf:{name:'Ringkampf',type:'DEFENSIV',power:35,acc:90,desc:'Kräftemessen'},
   wurf:{name:'Wurf',type:'TECHNIK',power:45,acc:80,desc:'Judo-Wurf'},
-  ausdauer:{name:'Ausdauer',type:'HERZ',power:0,acc:100,desc:'Hebt Moral +25',heal:25}
+  ausdauer:{name:'Ausdauer',type:'HERZ',power:0,acc:100,desc:'Hebt Moral +25',heal:25},
+  // Bayern-Fan moves
+  schalklau:{name:'Schal-Klau',type:'TECHNIK',power:45,acc:85,desc:'Klaut den 1860er Schal! Senkt Moral.',moralDmg:15},
+  pfiff:{name:'Auspfeifen',type:'HERZ',power:30,acc:90,desc:'Buuuh! Senkt Gegner-Moral.',moralDmg:10},
+  roterrauch:{name:'Roter Rauch',type:'TAKTIK',power:35,acc:80,desc:'Bengalo! Verwirrt den Gegner.'},
+  miasamia:{name:'Mia san Mia',type:'HERZ',power:0,acc:100,desc:'Arroganter Schlachtruf. +Angriff.',stat:'atk',boost:2},
+  schubser:{name:'Schubser',type:'ANGRIFF',power:30,acc:95,desc:'Rüpelhafter Rempler'},
+  bierbecher:{name:'Bierbecher',type:'ANGRIFF',power:40,acc:80,desc:'Wirft einen Becher!'}
 };
 
 // === PLAYER DEFINITIONS ===
@@ -188,11 +195,29 @@ const PLAYERS=[
     moves:['turnen','barren','mauer','motivation'],desc:'Ein Turner - stählerner Körper und Geist!',era:0},
   {id:'stuermer',name:'Straßenkicker',types:['TAKTIK','ANGRIFF'],baseHp:45,baseAtk:45,baseDef:28,baseSpd:50,
     moves:['torschuss','dribbling','spielaufbau','fangesang'],desc:'Ein Fußballer von der Straße - clever und treffsicher!',era:0},
-  // Wild encounter extras
+  // Wild encounter extras (Giesing)
   {id:'sparring',name:'Sparringspartner',types:['ANGRIFF'],baseHp:35,baseAtk:40,baseDef:25,baseSpd:35,
     moves:['jab','schwinger','deckung','ausdauer'],desc:'Ein Boxer zum Üben',era:0},
   {id:'ringer',name:'Ringer',types:['DEFENSIV','ANGRIFF'],baseHp:50,baseAtk:40,baseDef:45,baseSpd:25,
-    moves:['ringkampf','wurf','schwinger','ausdauer'],desc:'Kräftiger Ringer',era:0}
+    moves:['ringkampf','wurf','schwinger','ausdauer'],desc:'Kräftiger Ringer',era:0},
+  // === BAYERN FANS (Gegner!) ===
+  {id:'bayernfan1',name:'Bayern-Bubi',types:['ANGRIFF'],baseHp:38,baseAtk:42,baseDef:22,baseSpd:38,
+    moves:['schubser','schalklau','pfiff','miasamia'],desc:'Ein nerviger Bayern-Fan',era:0},
+  {id:'bayernfan2',name:'Rote Socke',types:['HERZ','ANGRIFF'],baseHp:42,baseAtk:38,baseDef:28,baseSpd:35,
+    moves:['schalklau','bierbecher','miasamia','pfiff'],desc:'Lauter Bayern-Pöbler',era:0},
+  {id:'bayernfan3',name:'Schickeria-Typ',types:['TAKTIK','TECHNIK'],baseHp:40,baseAtk:35,baseDef:30,baseSpd:42,
+    moves:['roterrauch','schalklau','pressing','taktikfoul'],desc:'Arroganter Edel-Fan',era:0},
+  {id:'bayernultra',name:'Bayern-Ultra',types:['ANGRIFF','HERZ'],baseHp:48,baseAtk:48,baseDef:32,baseSpd:35,
+    moves:['bierbecher','schalklau','blutgrätsche','miasamia'],desc:'Harter Bayern-Ultra',era:0},
+  // Bayern fans for era 1-4 (wild encounters in each era)
+  {id:'bayernfan_alt',name:'Roter Rivale 1848',types:['TAKTIK'],baseHp:36,baseAtk:34,baseDef:30,baseSpd:32,
+    moves:['schubser','pfiff','taktikfoul','schalklau'],desc:'Rivale aus der Gründerzeit',era:1},
+  {id:'bayernfan_66',name:'Roter Rivale 1966',types:['ANGRIFF','TAKTIK'],baseHp:44,baseAtk:44,baseDef:28,baseSpd:40,
+    moves:['schalklau','bierbecher','pressing','miasamia'],desc:'Neidischer Bayern-Fan der 60er',era:2},
+  {id:'bayernfan_94',name:'Roter Rivale 1994',types:['HERZ','ANGRIFF'],baseHp:48,baseAtk:46,baseDef:32,baseSpd:38,
+    moves:['schalklau','roterrauch','bierbecher','pfiff'],desc:'Überheblicher Bayern-Fan der 90er',era:3},
+  {id:'bayernfan_now',name:'Roter Rivale 2024',types:['ANGRIFF','TECHNIK'],baseHp:52,baseAtk:50,baseDef:35,baseSpd:40,
+    moves:['schalklau','miasamia','bierbecher','roterrauch'],desc:'Moderner Bayern-Bonze',era:4}
 ];
 
 function makePlayerInstance(id,level){
@@ -641,7 +666,8 @@ function makeBattleSprite(id){
   } else {
     // Human player sprite
     const isGK=id==='radi';
-    const shirtCol=isGK?'#40a040':'#2a6aac';
+    const isBayern=id.startsWith('bayern');
+    const shirtCol=isBayern?'#c04040':isGK?'#40a040':'#2a6aac';
     // head
     cx.fillStyle='#6a4a2a';
     cx.fillRect(16,2,16,8);
@@ -662,7 +688,7 @@ function makeBattleSprite(id){
     cx.fillStyle='#e8e8e0';
     cx.fillRect(22,22,4,6);
     // shorts
-    cx.fillStyle='#e8e8e0';
+    cx.fillStyle=isBayern?'#e8e8e0':'#e8e8e0';
     cx.fillRect(14,32,20,6);
     // legs
     cx.fillStyle='#e0b080';
@@ -675,6 +701,13 @@ function makeBattleSprite(id){
     cx.fillRect(8,18,4,12);cx.fillRect(36,18,4,12);
     cx.fillStyle='#e0b080';
     cx.fillRect(8,30,4,4);cx.fillRect(36,30,4,4);
+    // Bayern fan scarf
+    if(isBayern){
+      cx.fillStyle='#e8e8e0';
+      cx.fillRect(14,17,20,2);
+      cx.fillStyle='#c04040';
+      cx.fillRect(14,17,4,2);cx.fillRect(22,17,4,2);cx.fillRect(30,17,4,2);
+    }
   }
   return cv;
 }
@@ -721,8 +754,8 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#e8e8e0'),
       dialog:['Willkommen in Giesing!','Hier ist das Herz von 1860.','Betritt die Zeitportale, um die','Geschichte von 1860 zu retten!'],
       name:'Fan Hans'});
-    npcs.push({x:18,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#081820'),
-      dialog:['Im hohen Gras triffst du auf','wilde Sportler - Boxer, Turner','und Ringer! Besiege sie und','sie schließen sich deinem Team an.'],
+    npcs.push({x:18,y:10,sprite:makeNPCSprite('#e8d840','#2a6aac','#e8e8e0'),
+      dialog:['Vorsicht im hohen Gras!','Überall lauern Bayern-Fans!','Die wollen dir deinen Schal','klauen! Besiege sie!'],
       name:'Trainerin Lisa'});
     npcs.push({x:22,y:8,sprite:makeNPCSprite('#081820','#e8e8e0','#2a6aac'),
       dialog:['Drücke SPACE zum Bestätigen,','Pfeiltasten zum Bewegen.','M öffnet das Menü.'],
@@ -750,13 +783,13 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#5a3a1a','#c0a060','#5a3a1a'),
       dialog:['Wir befinden uns im Jahre 1848!','Hier wurde der TSV gegründet.','Die Turner waren die Ersten!'],
       name:'Bürger Wilhelm'});
-    npcs.push({x:20,y:10,sprite:makeNPCSprite('#8a5a2a','#8a7040','#5a3a1a'),
-      dialog:['Turnvater Friedrich wartet','in der Arena auf dich!','Sei vorbereitet!'],
-      name:'Turner Josef',battle:true,team:[makePlayerInstance('gymnast',6)],
+    npcs.push({x:20,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
+      dialog:['Hey du Sechzger!','Mia san Mia! Der TSV ist','eh bald Geschichte!','Schal her!'],
+      name:'Bayern-Bubi Karl',battle:true,team:[makePlayerInstance('bayernfan_alt',6),makePlayerInstance('bayernfan_alt',7)],
       defeated:false,defKey:'1_turner'});
-    npcs.push({x:8,y:14,sprite:makeNPCSprite('#6a4a2a','#a08050','#4a3a1a'),
-      dialog:['Die Turnbewegung ist stark!','Turnen stählt Körper und Geist.'],
-      name:'Turnerin Anna',battle:true,team:[makePlayerInstance('turner',5)],
+    npcs.push({x:8,y:14,sprite:makeNPCSprite('#6a4a2a','#c04040','#e8e8e0'),
+      dialog:['Was willst du hier?','1860 gehört in die Kreisliga!','Gib deinen Schal her!'],
+      name:'Rote Socke Hans',battle:true,team:[makePlayerInstance('bayernfan_alt',5)],
       defeated:false,defKey:'1_anna'});
   }
   else if(idx===2){
@@ -780,13 +813,13 @@ function generateMap(idx){
     npcs.push({x:10,y:10,sprite:makeNPCSprite('#e8d840','#2a6aac','#e8e8e0'),
       dialog:['1966 - Die goldene Ära!','Radi und Rudi waren Götter!','Was für eine Mannschaft!'],
       name:'Reporter Fritz'});
-    npcs.push({x:22,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#1a3a5c'),
-      dialog:['Ich trainiere wie Rudi!','Zeig mir was du kannst!'],
-      name:'Nachwuchs Sepp',battle:true,team:[makePlayerInstance('brenninger',10),makePlayerInstance('bruells',9)],
+    npcs.push({x:22,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
+      dialog:['1966? Euer Meistertitel','war doch ein Witz!','Bayern hat 30 davon!','Her mit dem Schal!'],
+      name:'Bayern-Fan Sepp',battle:true,team:[makePlayerInstance('bayernfan_66',10),makePlayerInstance('bayernfan_66',9)],
       defeated:false,defKey:'2_sepp'});
-    npcs.push({x:6,y:14,sprite:makeNPCSprite('#e8e8e0','#2a6aac','#1a3a5c'),
-      dialog:['Das Grünwalder bebt!','Die Fans singen!'],
-      name:'Fan Gustl',battle:true,team:[makePlayerInstance('grosser',9)],
+    npcs.push({x:6,y:14,sprite:makeNPCSprite('#081820','#c04040','#e8e8e0'),
+      dialog:['Mia san Mia!','Euer Grünwalder ist','ja kleiner als unser Parkplatz!'],
+      name:'Schickeria-Typ Gustl',battle:true,team:[makePlayerInstance('bayernfan_66',9)],
       defeated:false,defKey:'2_gustl'});
   }
   else if(idx===3){
@@ -805,13 +838,13 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#081820','#e8e8e0','#081820'),
       dialog:['1994 - Der Aufstieg!','Winkler hat es geschafft!','Bundesliga, wir kommen!'],
       name:'Journalist Helmut'});
-    npcs.push({x:20,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#e8e8e0'),
-      dialog:['Lorant ist ein harter Trainer!','Bist du bereit für die','Olympia-Arena?'],
-      name:'Spieler Markus',battle:true,team:[makePlayerInstance('cerny',14),makePlayerInstance('haessler',13)],
+    npcs.push({x:20,y:10,sprite:makeNPCSprite('#6a4a2a','#c04040','#e8e8e0'),
+      dialog:['Haha, 1860 im Olympiastadion?','Das war doch immer UNSER Stadion!','Schal her, Sechzger!'],
+      name:'Bayern-Ultra Markus',battle:true,team:[makePlayerInstance('bayernfan_94',14),makePlayerInstance('bayernfan_94',13)],
       defeated:false,defKey:'3_markus'});
-    npcs.push({x:8,y:6,sprite:makeNPCSprite('#c04040','#e8e8e0','#1a3a5c'),
-      dialog:['Die 90er waren wild!','Aufstieg und Abstieg im Wechsel!'],
-      name:'Ultra Kai',battle:true,team:[makePlayerInstance('wagner',12)],
+    npcs.push({x:8,y:6,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
+      dialog:['Die 90er? Da habt ihr doch','nur unseren Abfall bekommen!','Mia san Mia!'],
+      name:'Rote Socke Kai',battle:true,team:[makePlayerInstance('bayernfan_94',12)],
       defeated:false,defKey:'3_kai'});
   }
   else if(idx===4){
@@ -830,13 +863,13 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#2a6aac','#e8e8e0','#1a3a5c'),
       dialog:['2024 - Die Zukunft!','1860 lebt ewig!','Der ewige Löwe wartet...'],
       name:'Fan Mia'});
-    npcs.push({x:20,y:6,sprite:makeNPCSprite('#081820','#2a6aac','#e8e8e0'),
-      dialog:['Mölders war eine Legende!','Aber kannst du mich besiegen?'],
-      name:'Kicker Tom',battle:true,team:[makePlayerInstance('moelders',18),makePlayerInstance('bierofka',17)],
+    npcs.push({x:20,y:6,sprite:makeNPCSprite('#081820','#c04040','#e8e8e0'),
+      dialog:['2024 und ihr spielt immer','noch dritte Liga? Peinlich!','Gib den Schal, der gehört','in ein Museum!'],
+      name:'Bayern-Bonze Tom',battle:true,team:[makePlayerInstance('bayernfan_now',18),makePlayerInstance('bayernfan_now',17)],
       defeated:false,defKey:'4_tom'});
-    npcs.push({x:24,y:14,sprite:makeNPCSprite('#d0a020','#1a3a5c','#081820'),
-      dialog:['Die Zukunft gehört dem TSV!','Einmal Löwe, immer Löwe!'],
-      name:'Ultra Sarah',battle:true,team:[makePlayerInstance('wagner',16)],
+    npcs.push({x:24,y:14,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
+      dialog:['Warum seid ihr nicht einfach','zu Bayern gewechselt?','Schal her, Versager!'],
+      name:'Schickeria Sarah',battle:true,team:[makePlayerInstance('bayernfan_now',16)],
       defeated:false,defKey:'4_sarah'});
   }
   return{tiles:map,npcs,portals,arenaPos,idx};
@@ -1369,16 +1402,29 @@ function updateOverworld(){
           }
         }
 
-        // Wild encounter on tall grass
+        // Wild encounter on tall grass - mostly Bayern fans!
         if(tile===1&&Math.random()<GS.wildChance){
-          const wildEra=GS.map===0?0:GS.map;
-          const wildPool=PLAYERS.filter(p=>p.era===wildEra||p.era===(GS.map===0?1:wildEra));
-          if(wildPool.length>0){
-            const pick=wildPool[Math.floor(Math.random()*wildPool.length)];
+          const era=GS.map===0?0:GS.map;
+          // 70% chance Bayern fan, 30% other sportler
+          const isBayernFan=Math.random()<0.7;
+          let wildPool;
+          if(isBayernFan){
+            const bayernIds={0:['bayernfan1','bayernfan2','bayernfan3'],1:['bayernfan_alt'],2:['bayernfan_66'],3:['bayernfan_94'],4:['bayernfan_now']};
+            const pool=bayernIds[GS.map]||bayernIds[0];
+            const pickId=pool[Math.floor(Math.random()*pool.length)];
             const lvl=Math.max(3,Math.floor(GS.team[0].level+(Math.random()*4-2)));
-            const wild=makePlayerInstance(pick.id,lvl);
+            const wild=makePlayerInstance(pickId,lvl);
             playSFX('encounter');
             startTransition('encounter',{enemy:[wild],isArena:false,arenaIdx:-1});
+          } else {
+            wildPool=PLAYERS.filter(p=>(p.era===era||p.era===(GS.map===0?1:era))&&!p.id.startsWith('bayern'));
+            if(wildPool.length>0){
+              const pick=wildPool[Math.floor(Math.random()*wildPool.length)];
+              const lvl=Math.max(3,Math.floor(GS.team[0].level+(Math.random()*4-2)));
+              const wild=makePlayerInstance(pick.id,lvl);
+              playSFX('encounter');
+              startTransition('encounter',{enemy:[wild],isArena:false,arenaIdx:-1});
+            }
           }
         }
       }
@@ -1949,9 +1995,14 @@ function executePlayerMove(bs){
     else if(eff<1){playSFX('hit');bs.msg=bs.player.name+': '+m.name+'... Nicht effektiv. -'+dmg+'HP';}
     else{playSFX('hit');bs.msg=bs.player.name+': '+m.name+'! -'+dmg+'HP';}
     bs.enemy.moral=Math.max(0,bs.enemy.moral-3);
+    if(m.moralDmg)bs.enemy.moral=Math.max(0,bs.enemy.moral-m.moralDmg);
   } else if(m.stat==='def'){
     bs.player.defBoost+=m.boost;
     bs.msg=bs.player.name+': '+m.name+'! Verteidigung steigt!';
+    playSFX('confirm');
+  } else if(m.stat==='atk'){
+    bs.player.atkBoost+=m.boost;
+    bs.msg=bs.player.name+': '+m.name+'! Angriff steigt!';
     playSFX('confirm');
   } else if(m.heal){
     bs.player.moral=Math.min(100,bs.player.moral+m.heal);
@@ -1983,9 +2034,13 @@ function executeEnemyMove(bs){
     if(eff>1){bs.flashP=12;playSFX('superHit');bs.msg=bs.enemy.name+': '+m.name+'! Sehr effektiv! -'+dmg+'HP';}
     else{playSFX('hit');bs.msg=bs.enemy.name+': '+m.name+'! -'+dmg+'HP';}
     bs.player.moral=Math.max(0,bs.player.moral-2);
+    if(m.moralDmg)bs.player.moral=Math.max(0,bs.player.moral-m.moralDmg);
   } else if(m.stat==='def'){
     bs.enemy.defBoost+=m.boost;
     bs.msg=bs.enemy.name+': '+m.name+'! Verteidigung steigt!';
+  } else if(m.stat==='atk'){
+    bs.enemy.atkBoost+=m.boost;
+    bs.msg=bs.enemy.name+': '+m.name+'! Angriff steigt!';
   } else if(m.heal){
     bs.enemy.moral=Math.min(100,bs.enemy.moral+m.heal);
     bs.msg=bs.enemy.name+': '+m.name+'! Moral steigt!';
