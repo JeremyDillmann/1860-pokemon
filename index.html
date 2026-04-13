@@ -83,7 +83,12 @@ let GS={
 const ITEMS={
   weissbier:{name:'Weißbier',desc:'Heilt 30 HP',effect:(p)=>{p.hp=Math.min(p.maxHp,p.hp+30)}},
   rasen:{name:'Grünwalder Rasen',desc:'Heilt 20 Moral',effect:(p)=>{p.moral=Math.min(100,p.moral+20)}},
-  brezn:{name:'Brezn',desc:'Volle Heilung',effect:(p)=>{p.hp=p.maxHp;p.moral=100}}
+  brezn:{name:'Brezn',desc:'Volle Heilung',effect:(p)=>{p.hp=p.maxHp;p.moral=100}},
+  ruescherl:{name:'Rüscherl-Booster',desc:'Volle XP! Sofort Level Up!',effect:(p)=>{
+    const needed=p.xpNext-p.xp;
+    const leveled=gainXP(p,needed);
+    return leveled;
+  }}
 };
 
 // === TYPES ===
@@ -1126,7 +1131,7 @@ function updateTitle(){
 function newGame(){
   GS.map=0;GS.px=15;GS.py=10;GS.pdir=0;
   GS.team=[];
-  GS.items=[{id:'weissbier',qty:5},{id:'rasen',qty:3},{id:'brezn',qty:1}];
+  GS.items=[{id:'weissbier',qty:5},{id:'rasen',qty:3},{id:'brezn',qty:1},{id:'ruescherl',qty:2}];
   GS.badges=[false,false,false,false];
   GS.npcsDefeated={};
   initMaps();
