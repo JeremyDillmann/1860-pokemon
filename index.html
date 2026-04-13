@@ -1396,7 +1396,7 @@ function updateOverworld(){
           const leaderIdx=GS.map-1;
           if(leaderIdx>=0&&leaderIdx<4){
             if(GS.badges[leaderIdx]){
-              startDialog(['Du hast diese Arena bereits','besiegt! Weiter so!'],null);
+              startDialog(['Du hast diese Arena bereits','aus dem Viertel gejagt! Weiter so!'],null);
             } else {
               const leader=ARENA_LEADERS[leaderIdx];
               // Reset leader team HP
@@ -1447,7 +1447,7 @@ function updateOverworld(){
     map.npcs.forEach(npc=>{
       if(npc.x===fx&&npc.y===fy){
         if(npc.battle&&GS.npcsDefeated[npc.defKey]){
-          startDialog(['...','(Bereits besiegt)'],null);
+          startDialog(['...','(Bereits aus dem Viertel gejagt)'],null);
         } else if(npc.battle&&!npc.defeated){
           startDialog(npc.dialog,()=>{
             npc.team.forEach(p=>{p.hp=p.maxHp;p.moral=80;p.atkBoost=0;p.defBoost=0;});
@@ -1856,7 +1856,7 @@ function updateBattle(){
       // Check if enemy fainted
       if(bs.enemy.hp<=0){
         bs.phase='result';
-        bs.msg=bs.enemy.name+' ist besiegt!';
+        bs.msg=bs.enemy.name+' aus dem Viertel gejagt!';
         bs.resultTimer=0;
         bs.won=true;
       } else {
@@ -1957,7 +1957,7 @@ function updateBattle(){
           playSFX('victory');
           // Check if all badges
           if(GS.badges.every(b=>b)){
-            startDialog(['GLÜCKWUNSCH!','Du hast alle 4 Arenen besiegt!','TSV 1860 München ist gerettet!','Die Geschichte lebt weiter!','EINMAL LÖWE, IMMER LÖWE!'],()=>{
+            startDialog(['GLÜCKWUNSCH!','Alle Bayern-Schweine aus dem','Viertel gejagt! TSV 1860 ist','gerettet! EINMAL LÖWE, IMMER LÖWE!'],()=>{
               GS.battleState=null;GS.mode='overworld';startBGM('overworld');
             });
           } else {
