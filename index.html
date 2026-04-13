@@ -88,7 +88,9 @@ const ITEMS={
     const needed=p.xpNext-p.xp;
     const leveled=gainXP(p,needed);
     return leveled;
-  }}
+  }},
+  spraydose:{name:'Spraydose',desc:'+15 Angriff im nächsten Kampf',effect:(p)=>{p.atkBoost+=3;}},
+  sticker:{name:'1860-Sticker',desc:'+25 Moral. Einmal Löwe!',effect:(p)=>{p.moral=Math.min(100,p.moral+25);}}
 };
 
 // === TYPES ===
@@ -923,6 +925,20 @@ function generateMap(idx){
     npcs.push({x:12,y:16,sprite:makeNPCSprite('#c0a060','#2a6aac','#1a3a5c'),
       dialog:['Kyso! Klein aber fein!','Kein Bayern-Schwein traut sich','hierher! Wer es versucht,','kriegt den Schläger zu spüren!'],
       name:'Löwenfan Kyso'});
+    // Händler auf der Straße
+    npcs.push({x:10,y:14,sprite:makeNPCSprite('#081820','#2a8a2a','#1a3a5c'),
+      dialog:['Spraydosen! Frisch aus Giesing!','Damit sprühst du 1860 überall hin!','Willst du eine kaufen?'],
+      name:'Sprayer Michi',shop:{itemId:'spraydose',price:2,currency:'weissbier'}});
+    npcs.push({x:11,y:14,sprite:makeNPCSprite('#e8d840','#2a6aac','#e8e8e0'),
+      dialog:['1860-Sticker! Kleb sie überall','hin! Auf jede Laterne,','jede Ampel, jeden Bayern-Aufkleber!'],
+      name:'Sticker-Verkäufer',shop:{itemId:'sticker',price:1,currency:'weissbier'}});
+    npcs.push({x:10,y:16,sprite:makeNPCSprite('#6a4a2a','#e8e8e0','#2a6aac'),
+      dialog:['Rüscherl-Booster!','Damit wird dein Spieler sofort','stärker! Nur für echte Sechzger!'],
+      name:'Rüscherl-Dealer',shop:{itemId:'ruescherl',price:3,currency:'weissbier'}});
+    npcs.push({x:11,y:16,sprite:makeNPCSprite('#8a5a2a','#e8e8e0','#5a3a1a'),
+      dialog:['Weißbier! Frisch gezapft!','Heilt deine Spieler nach dem','Kampf gegen die Bayern-Schweine!'],
+      name:'Bier-Hansi',shop:{itemId:'weissbier',price:0,currency:null}});
+
     // Polizeiautos auf der Straße (als NPCs die sich nicht bewegen)
     npcs.push({x:10,y:12,sprite:makePolizeiSprite(),
       dialog:['Polizei! Alles ruhig hier?','Wir haben Berichte über','Bayern-Fans im Viertel...','Passt auf euch auf!'],
@@ -941,6 +957,31 @@ function generateMap(idx){
     npcs.push({x:22,y:8,sprite:makeNPCSprite('#081820','#e8e8e0','#2a6aac'),
       dialog:['Drücke SPACE zum Bestätigen,','Pfeiltasten zum Bewegen.','M öffnet das Menü.'],
       name:'Erklärbär'});
+
+    // === SPOTTER - 1860 Fans die Bayern-Schweine jagen ===
+    npcs.push({x:5,y:4,sprite:makeNPCSprite('#081820','#2a6aac','#081820'),
+      dialog:['Psst! Ich bin Spotter!','Hab vorhin zwei Bayern-Schweine','im hohen Gras gesehen!','Die wollten Schals klauen!','Jag sie aus dem Viertel!'],
+      name:'Spotter Manu'});
+    npcs.push({x:25,y:14,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#081820'),
+      dialog:['Spotter hier! Drei Rote','sind Richtung Süden unterwegs!','Hab schon einem den Bayern-Schal','abgenommen! Haha!','Hier, nimm einen Sticker!'],
+      name:'Spotter Flo',shop:{itemId:'sticker',price:0,currency:null}});
+    npcs.push({x:20,y:4,sprite:makeNPCSprite('#e8d840','#2a6aac','#081820'),
+      dialog:['Achtung! Bayern-Schwein gesichtet!','Der hat rotes Trikot und','schleicht ums Grünwalder!','Geh ins hohe Gras und','jag ihn aus dem Viertel!'],
+      name:'Spotter Xaver'});
+    npcs.push({x:4,y:16,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#081820'),
+      dialog:['Ich bin Spotter-Chef!','Wir haben Augen überall!','Kein Bayern-Schwein bleibt','in Giesing unentdeckt!','Einmal Löwe, immer Löwe!'],
+      name:'Spotter-Chef Wolfi'});
+
+    // === PSYCHO-ANDI ===
+    const andiDialogs=[
+      ['WAAAAS?! SCHAUST DU?!','ICH BIN DER PSYCHO-ANDI!','Wenn ich ein Bayern-Schwein seh','DREH ICH DURCH!!!','SECHZIG! SECHZIG! SECHZIG!'],
+      ['HEY DU! JA DU!','Bist du Löwe oder was?!','Wenn nicht, dann GEH!','Hier ist GIESING!','MEIN VIERTEL!!!'],
+      ['AAAANDI IST DA!','Hab gestern drei Bayern-Fans','durch die Tegernseer','Landstraße gejagt!','Die rennen IMMER NOCH!'],
+      ['WAS WILLST DU?!','Ah, ein Sechzger! Geht klar!','Hier, nimm ein Weißbier!','Aber wehe du bist ein','VERDECKTER ROTER!!!']
+    ];
+    npcs.push({x:16,y:12,sprite:makeNPCSprite('#c04040','#2a6aac','#081820'),
+      dialog:andiDialogs[Math.floor(Math.random()*andiDialogs.length)],
+      name:'Psycho-Andi',shop:{itemId:'weissbier',price:0,currency:null}});
   }
   else if(idx===1){
     // 1848 ALTER BOTANISCHER GARTEN
@@ -964,6 +1005,9 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#5a3a1a','#c0a060','#5a3a1a'),
       dialog:['Wir befinden uns im Jahre 1848!','Hier wurde der TSV gegründet.','Die Turner waren die Ersten!'],
       name:'Bürger Wilhelm'});
+    npcs.push({x:6,y:6,sprite:makeNPCSprite('#5a3a1a','#2a6aac','#081820'),
+      dialog:['Spotter aus der Zukunft!','Auch 1848 gibt es schon','rote Rivalen! Ich hab zwei','beim Turnplatz gesehen!','Vertreib sie!'],
+      name:'Zeit-Spotter'});
     npcs.push({x:20,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
       dialog:['Hey du Sechzger!','Mia san Mia! Der TSV ist','eh bald Geschichte!','Schal her!'],
       name:'Bayern-Schwein Karl',battle:true,team:[makePlayerInstance('bayernfan_alt',6),makePlayerInstance('bayernfan_alt',7)],
@@ -994,6 +1038,9 @@ function generateMap(idx){
     npcs.push({x:10,y:10,sprite:makeNPCSprite('#e8d840','#2a6aac','#e8e8e0'),
       dialog:['1966 - Die goldene Ära!','Radi und Rudi waren Götter!','Was für eine Mannschaft!'],
       name:'Reporter Fritz'});
+    npcs.push({x:8,y:6,sprite:makeNPCSprite('#081820','#2a6aac','#081820'),
+      dialog:['Spotter 66! Hab gerade','einem Bayern-Fan den Schal','geklaut! Der ist rot','angelaufen! Hahaha!'],
+      name:'Spotter 66'});
     npcs.push({x:22,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
       dialog:['1966? Euer Meistertitel','war doch ein Witz!','Bayern hat 30 davon!','Her mit dem Schal!'],
       name:'Bayern-Fan Sepp',battle:true,team:[makePlayerInstance('bayernfan_66',10),makePlayerInstance('bayernfan_66',9)],
@@ -1019,6 +1066,9 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#081820','#e8e8e0','#081820'),
       dialog:['1994 - Der Aufstieg!','Winkler hat es geschafft!','Bundesliga, wir kommen!'],
       name:'Journalist Helmut'});
+    npcs.push({x:6,y:14,sprite:makeNPCSprite('#e8d840','#2a6aac','#081820'),
+      dialog:['Spotter 94! Die Roten sind','überall hier! Hab drei','am Olympiastadion gesehen!','Kein Bayern-Schwein ist sicher!'],
+      name:'Spotter 94'});
     npcs.push({x:20,y:10,sprite:makeNPCSprite('#6a4a2a','#c04040','#e8e8e0'),
       dialog:['Haha, 1860 im Olympiastadion?','Das war doch immer UNSER Stadion!','Schal her, Sechzger!'],
       name:'Bayern-Ultra Markus',battle:true,team:[makePlayerInstance('bayernfan_94',14),makePlayerInstance('bayernfan_94',13)],
@@ -1044,6 +1094,9 @@ function generateMap(idx){
     npcs.push({x:12,y:10,sprite:makeNPCSprite('#2a6aac','#e8e8e0','#1a3a5c'),
       dialog:['2024 - Die Zukunft!','1860 lebt ewig!','Der ewige Löwe wartet...'],
       name:'Fan Mia'});
+    npcs.push({x:8,y:8,sprite:makeNPCSprite('#081820','#2a6aac','#081820'),
+      dialog:['Spotter 2024! Die Bayern-Bonzen','sind die Schlimmsten!','Hab gerade einem den roten','Schal vom Hals gerissen!','Wird jetzt ein Putzlappen!'],
+      name:'Spotter 2024'});
     npcs.push({x:20,y:6,sprite:makeNPCSprite('#081820','#c04040','#e8e8e0'),
       dialog:['2024 und ihr spielt immer','noch dritte Liga? Peinlich!','Gib den Schal, der gehört','in ein Museum!'],
       name:'Bayern-Bonze Tom',battle:true,team:[makePlayerInstance('bayernfan_now',18),makePlayerInstance('bayernfan_now',17)],
@@ -1639,6 +1692,40 @@ function updateOverworld(){
             npc.team.forEach(p=>{p.hp=p.maxHp;p.moral=80;p.atkBoost=0;p.defBoost=0;});
             startBattle(npc.team.map(p=>({...p})),false,-1,npc.defKey);
           });
+        } else if(npc.shop){
+          // Shop NPC
+          const shop=npc.shop;
+          const itemDef=ITEMS[shop.itemId];
+          if(shop.price===0){
+            // Free item (Weißbier-Hansi)
+            startDialog(npc.dialog,()=>{
+              const existing=GS.items.find(it=>it.id===shop.itemId);
+              if(existing)existing.qty+=2;
+              else GS.items.push({id:shop.itemId,qty:2});
+              startDialog([itemDef.name+' x2 erhalten!','Prost, Löwe!'],null);
+            });
+          } else {
+            const currItem=GS.items.find(it=>it.id===shop.currency);
+            const currName=ITEMS[shop.currency]?ITEMS[shop.currency].name:shop.currency;
+            const hasEnough=currItem&&currItem.qty>=shop.price;
+            startDialog(npc.dialog,()=>{
+              if(hasEnough){
+                startDialog([itemDef.name+' kostet '+shop.price+' '+currName+'.','Du hast genug! Kaufen?','(SPACE = Ja)'],()=>{
+                  const curr=GS.items.find(it=>it.id===shop.currency);
+                  if(curr&&curr.qty>=shop.price){
+                    curr.qty-=shop.price;
+                    const existing=GS.items.find(it=>it.id===shop.itemId);
+                    if(existing)existing.qty++;
+                    else GS.items.push({id:shop.itemId,qty:1});
+                    playSFX('confirm');
+                    startDialog([itemDef.name+' gekauft!','Viel Spaß damit, Löwe!'],null);
+                  }
+                });
+              } else {
+                startDialog(['Du brauchst '+shop.price+' '+currName+'!','Du hast nicht genug...','Komm später wieder!'],null);
+              }
+            });
+          }
         } else {
           startDialog(npc.dialog,null);
         }
@@ -2243,8 +2330,14 @@ function handleXPPhase(bs){
   const xpGain=bs.enemyTeam.reduce((s,e)=>s+e.level*8,0);
   bs.xpGain=xpGain;
   const leveled=gainXP(bs.player,xpGain);
+  // Reward: Weißbier after each fight
+  const wbReward=Math.random()<0.5?1:0;
+  if(wbReward>0){
+    const wb=GS.items.find(it=>it.id==='weissbier');
+    if(wb)wb.qty+=wbReward;else GS.items.push({id:'weissbier',qty:wbReward});
+  }
   bs.phase='xp';bs.resultTimer=0;
-  bs.msg=bs.player.name+' erhält '+xpGain+' XP!'+(leveled?' LEVEL UP!':'');
+  bs.msg=bs.player.name+' erhält '+xpGain+' XP!'+(leveled?' LEVEL UP!':'')+(wbReward>0?' +1 Weißbier!':'');
   if(leveled)playSFX('levelup');
 }
 
