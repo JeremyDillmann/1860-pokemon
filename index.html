@@ -201,7 +201,7 @@ const PLAYERS=[
   {id:'ringer',name:'Ringer',types:['DEFENSIV','ANGRIFF'],baseHp:50,baseAtk:40,baseDef:45,baseSpd:25,
     moves:['ringkampf','wurf','schwinger','ausdauer'],desc:'Kräftiger Ringer',era:0},
   // === BAYERN FANS (Gegner!) ===
-  {id:'bayernfan1',name:'Bayern-Bubi',types:['ANGRIFF'],baseHp:38,baseAtk:42,baseDef:22,baseSpd:38,
+  {id:'bayernfan1',name:'Bayern-Schwein',types:['ANGRIFF'],baseHp:38,baseAtk:42,baseDef:22,baseSpd:38,
     moves:['schubser','schalklau','pfiff','miasamia'],desc:'Ein nerviger Bayern-Fan',era:0},
   {id:'bayernfan2',name:'Rote Socke',types:['HERZ','ANGRIFF'],baseHp:42,baseAtk:38,baseDef:28,baseSpd:35,
     moves:['schalklau','bierbecher','miasamia','pfiff'],desc:'Lauter Bayern-Pöbler',era:0},
@@ -785,7 +785,7 @@ function generateMap(idx){
       name:'Bürger Wilhelm'});
     npcs.push({x:20,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#e8e8e0'),
       dialog:['Hey du Sechzger!','Mia san Mia! Der TSV ist','eh bald Geschichte!','Schal her!'],
-      name:'Bayern-Bubi Karl',battle:true,team:[makePlayerInstance('bayernfan_alt',6),makePlayerInstance('bayernfan_alt',7)],
+      name:'Bayern-Schwein Karl',battle:true,team:[makePlayerInstance('bayernfan_alt',6),makePlayerInstance('bayernfan_alt',7)],
       defeated:false,defKey:'1_turner'});
     npcs.push({x:8,y:14,sprite:makeNPCSprite('#6a4a2a','#c04040','#e8e8e0'),
       dialog:['Was willst du hier?','1860 gehört in die Kreisliga!','Gib deinen Schal her!'],
