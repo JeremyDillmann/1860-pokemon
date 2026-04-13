@@ -996,11 +996,11 @@ function generateMap(idx){
     // Kyso (rechts unten)
     map[16][12]=4;map[16][13]=4;map[17][12]=4;map[17][13]=4;
 
-    // Kneipen-Portale (Eingänge)
-    map[14][9]=6;portals.push({x:9,y:14,toMap:5,toX:5,toY:8,label:'Schönstüberl'});
-    map[16][9]=6;portals.push({x:9,y:16,toMap:6,toX:5,toY:8,label:'Trepperlwirt'});
-    map[14][12]=6;portals.push({x:12,y:14,toMap:7,toX:5,toY:8,label:'Kastaniengarten'});
-    map[16][12]=6;portals.push({x:12,y:16,toMap:8,toX:5,toY:8,label:'Kyso'});
+    // Kneipen-Portale (Eingänge) - auf dem Weg, direkt begehbar
+    map[13][10]=6;portals.push({x:10,y:13,toMap:5,toX:5,toY:8,label:'Schönstüberl'});
+    map[17][10]=6;portals.push({x:10,y:17,toMap:6,toX:5,toY:8,label:'Trepperlwirt'});
+    map[13][11]=6;portals.push({x:11,y:13,toMap:7,toX:5,toY:8,label:'Kastaniengarten'});
+    map[17][11]=6;portals.push({x:11,y:17,toMap:8,toX:5,toY:8,label:'Kyso'});
 
     // Kneipen-NPCs - Löwenfans als Türsteher in Blau mit Baseballschläger
     npcs.push({x:10,y:15,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#1a3a5c'),
@@ -1229,10 +1229,10 @@ function generateMap(idx){
 
     // Portal back to Kneipenstraße
     const backPositions=[
-      {toX:9,toY:15},  // Schönstüberl → near its door
-      {toX:9,toY:17},  // Trepperlwirt
-      {toX:12,toY:15}, // Kastaniengarten
-      {toX:12,toY:17}  // Kyso
+      {toX:10,toY:14}, // Schönstüberl → path south of portal
+      {toX:10,toY:16}, // Trepperlwirt → path north of portal
+      {toX:11,toY:14}, // Kastaniengarten → path south of portal
+      {toX:11,toY:16}  // Kyso → path north of portal
     ];
     const bp=backPositions[idx-5];
     map[MH-2][5]=6;portals.push({x:5,y:MH-2,toMap:0,toX:bp.toX,toY:bp.toY,label:'Kneipenstraße'});
