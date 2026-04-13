@@ -1,1185 +1,2116 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SECHZGER - Das 1860 RPG</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            background: #0F1A2E;
-            color: #E8E8E0;
-            font-family: monospace;
-            overflow: hidden;
-            touch-action: none;
-        }
-        
-        #gameContainer {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
-        }
-        
-        canvas {
-            background: #0F1A2E;
-            border: 2px solid #00529C;
-        }
-        
-        #touchControls {
-            position: fixed;
-            bottom: 20px;
-            width: 100%;
-            display: none;
-            pointer-events: none;
-        }
-        
-        .dpad {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 120px;
-            height: 120px;
-            pointer-events: all;
-        }
-        
-        .dpad-btn {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 82, 156, 0.7);
-            border: 2px solid #E8E8E0;
-            color: #E8E8E0;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            touch-action: none;
-        }
-        
-        .dpad-up { top: 0; left: 40px; }
-        .dpad-down { bottom: 0; left: 40px; }
-        .dpad-left { top: 40px; left: 0; }
-        .dpad-right { top: 40px; right: 0; }
-        
-        .action-buttons {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            pointer-events: all;
-        }
-        
-        .action-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 82, 156, 0.7);
-            border: 2px solid #E8E8E0;
-            color: #E8E8E0;
-            font-size: 18px;
-            margin: 5px;
-            display: inline-block;
-            text-align: center;
-            line-height: 46px;
-            user-select: none;
-            touch-action: none;
-        }
-        
-        @media (max-width: 768px) {
-            #touchControls { display: block; }
-        }
-        
-        .dialog-text {
-            font-size: 10px;
-            line-height: 12px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TSV 1860 München - Zeitreise RPG</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a1a;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:monospace;overflow:hidden;touch-action:none;user-select:none}
+#wrap{position:relative;display:flex;flex-direction:column;align-items:center}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;border:4px solid #1a3a5c;border-radius:4px;max-width:100vw;max-height:70vh}
+#touch{display:none;width:320px;margin-top:8px}
+@media(pointer:coarse){#touch{display:flex;justify-content:space-between;align-items:center}}
+.dpad{position:relative;width:120px;height:120px}
+.dpad button{position:absolute;width:40px;height:40px;background:#1a3a5c;border:2px solid #2a5a8c;color:#fff;font-size:18px;border-radius:4px;touch-action:manipulation}
+.dpad .up{top:0;left:40px}
+.dpad .down{bottom:0;left:40px}
+.dpad .left{top:40px;left:0}
+.dpad .right{top:40px;right:0}
+.abbtns{display:flex;gap:10px;align-items:center}
+.abbtns button{width:50px;height:50px;border-radius:50%;font-weight:bold;font-size:16px;touch-action:manipulation}
+.abbtns .abtn{background:#c04040;border:2px solid #e06060;color:#fff}
+.abbtns .bbtn{background:#4040a0;border:2px solid #6060c0;color:#fff}
+.abbtns .mbtn{background:#406040;border:2px solid #608060;color:#fff;width:40px;height:30px;border-radius:6px;font-size:11px}
+</style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="320" height="288"></canvas>
-    </div>
-    
-    <div id="touchControls">
-        <div class="dpad">
-            <div class="dpad-btn dpad-up" data-key="ArrowUp">↑</div>
-            <div class="dpad-btn dpad-down" data-key="ArrowDown">↓</div>
-            <div class="dpad-btn dpad-left" data-key="ArrowLeft">←</div>
-            <div class="dpad-btn dpad-right" data-key="ArrowRight">→</div>
-        </div>
-        <div class="action-buttons">
-            <div class="action-btn" data-key=" ">A</div>
-            <div class="action-btn" data-key="Escape">B</div>
-        </div>
-    </div>
+<div id="wrap">
+<canvas id="c" width="320" height="288"></canvas>
+<div id="touch">
+<div class="dpad">
+<button class="up" data-key="ArrowUp">&#9650;</button>
+<button class="down" data-key="ArrowDown">&#9660;</button>
+<button class="left" data-key="ArrowLeft">&#9664;</button>
+<button class="right" data-key="ArrowRight">&#9654;</button>
+</div>
+<div class="abbtns">
+<button class="mbtn" data-key="m">M</button>
+<button class="bbtn" data-key="x">B</button>
+<button class="abtn" data-key=" ">A</button>
+</div>
+</div>
+</div>
+<script>
+"use strict";
+const CVS=document.getElementById('c'),CTX=CVS.getContext('2d');
+CTX.imageSmoothingEnabled=false;
+const W=320,H=288,TW=16,TH=16,MW=30,MH=20;
 
-    <script>
-        // Game Constants
-        const CANVAS_WIDTH = 320;
-        const CANVAS_HEIGHT = 288;
-        const TILE_SIZE = 16;
-        const PLAYER_SPEED = 2;
-        const BATTLE_TRANSITION_TIME = 30;
-        
-        // Colors (Game Boy Color palette)
-        const COLORS = {
-            BACKGROUND: '#0F1A2E',
-            BLUE: '#00529C',
-            WHITE: '#E8E8E0',
-            GOLD: '#C8A832',
-            DARK: '#1A1A1A',
-            GRASS: '#2A6E3A',
-            GRAY: '#808080',
-            RED: '#CC4125',
-            GREEN: '#228B22',
-            BROWN: '#8B4513'
-        };
-        
-        // Game Types
-        const TYPES = {
-            ANGRIFF: 'ANGRIFF',
-            DEFENSIV: 'DEFENSIV', 
-            TECHNIK: 'TECHNIK',
-            TAKTIK: 'TAKTIK',
-            HERZ: 'HERZ'
-        };
-        
-        const TYPE_EFFECTIVENESS = {
-            [TYPES.ANGRIFF]: { strong: [TYPES.DEFENSIV], weak: [TYPES.TAKTIK] },
-            [TYPES.DEFENSIV]: { strong: [TYPES.TECHNIK], weak: [TYPES.ANGRIFF] },
-            [TYPES.TECHNIK]: { strong: [TYPES.TAKTIK], weak: [TYPES.DEFENSIV] },
-            [TYPES.TAKTIK]: { strong: [TYPES.ANGRIFF], weak: [TYPES.TECHNIK] },
-            [TYPES.HERZ]: { strong: [], weak: [] }
-        };
-        
-        // Game States
-        const GAME_STATES = {
-            TITLE: 'TITLE',
-            OVERWORLD: 'OVERWORLD',
-            BATTLE: 'BATTLE',
-            MENU: 'MENU',
-            DIALOG: 'DIALOG'
-        };
-        
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-        
-        // Game state
-        let gameState = GAME_STATES.TITLE;
-        let currentMap = 'giesing';
-        let player = {
-            x: 160,
-            y: 200,
-            direction: 'down',
-            isMoving: false,
-            frame: 0,
-            animTimer: 0
-        };
-        
-        let camera = { x: 0, y: 0 };
-        let dialogText = '';
-        let dialogIndex = 0;
-        let showDialog = false;
-        
-        // Player data
-        let playerData = {
-            name: 'Du',
-            team: [],
-            badges: [],
-            items: {
-                'Weißbier': 3,
-                'Grünwalder Rasen': 1
-            },
-            money: 500,
-            arenaProgress: 0
-        };
-        
-        // Input handling
-        const keys = {};
-        const keysPressed = {};
-        
-        document.addEventListener('keydown', (e) => {
-            keys[e.code] = true;
-            keysPressed[e.code] = true;
-            e.preventDefault();
+// === COLORS ===
+const C={
+  black:'#081820',dkblue:'#1a3a5c',blue:'#2a6aac',ltblue:'#6abadc',
+  white:'#e8e8e0',cream:'#d0c8a0',brown:'#8a5a2a',dkbrown:'#5a3a1a',
+  green:'#2a8a2a',ltgreen:'#5aba5a',dkgreen:'#1a5a1a',
+  red:'#c04040',ltred:'#e07070',gold:'#d0a020',yellow:'#e8d840',
+  gray:'#808080',ltgray:'#b0b0b0',dkgray:'#404040',
+  skin:'#e0b080',hair:'#6a4a2a',sepia:'#c0a060',sepiadk:'#8a7040',
+  pitch:'#3a8a3a',pitchlt:'#4aaa4a'
+};
+
+// === GAME STATE ===
+let GS={
+  mode:'title', // title,starterSelect,overworld,battle,dialog,menu,transition,encounter
+  starterSel:0, // 0=boxer, 1=turner, 2=fußballer
+  map:0, px:5,py:5, pdir:0, pwalk:0, pwalkTimer:0,
+  team:[], items:[{id:'weissbier',qty:5},{id:'rasen',qty:3},{id:'brezn',qty:1}],
+  badges:[false,false,false,false],
+  dialogLines:[],dialogIdx:0,dialogChar:0,dialogTimer:0,dialogCb:null,
+  battleState:null,
+  menuOpen:false,menuIdx:0,menuSub:0,menuTeamIdx:0,
+  transTimer:0,transType:'',transTo:null,
+  encounterTimer:0,
+  titleSel:0,titleTimer:0,
+  moveDir:-1,moveTimer:0,
+  wildChance:0.15,
+  frameCount:0,
+  musicOn:true,
+  npcsDefeated:{},
+  saved:false
+};
+
+// === ITEMS ===
+const ITEMS={
+  weissbier:{name:'Weißbier',desc:'Heilt 30 HP',effect:(p)=>{p.hp=Math.min(p.maxHp,p.hp+30)}},
+  rasen:{name:'Grünwalder Rasen',desc:'Heilt 20 Moral',effect:(p)=>{p.moral=Math.min(100,p.moral+20)}},
+  brezn:{name:'Brezn',desc:'Volle Heilung',effect:(p)=>{p.hp=p.maxHp;p.moral=100}}
+};
+
+// === TYPES ===
+const TYPES=['ANGRIFF','DEFENSIV','TECHNIK','TAKTIK','HERZ'];
+// effectiveness: ATK>DEF>TECH>TAK>ATK, HERZ neutral
+function typeEffect(atkType,defType){
+  if(atkType==='HERZ'||defType==='HERZ')return 1;
+  const i=TYPES.indexOf(atkType),j=TYPES.indexOf(defType);
+  if(i<4&&j<4){
+    if((i+1)%4===j)return 1.5;
+    if((j+1)%4===i)return 0.66;
+  }
+  return 1;
+}
+
+// === MOVES ===
+const MOVES={
+  // ANGRIFF moves
+  torschuss:{name:'Torschuss',type:'ANGRIFF',power:40,acc:90,desc:'Kraftvoller Schuss'},
+  kopfball:{name:'Kopfball',type:'ANGRIFF',power:35,acc:95,desc:'Präziser Kopfball'},
+  fernschuss:{name:'Fernschuss',type:'ANGRIFF',power:50,acc:75,desc:'Schuss aus der Distanz'},
+  fallrueckzieher:{name:'Fallrückzieher',type:'ANGRIFF',power:60,acc:65,desc:'Spektakulärer Treffer'},
+  // DEFENSIV moves
+  grätsche:{name:'Grätsche',type:'DEFENSIV',power:35,acc:90,desc:'Harte Grätsche'},
+  mauer:{name:'Mauer',type:'DEFENSIV',power:0,acc:100,desc:'Erhöht Verteidigung',stat:'def',boost:2},
+  parade:{name:'Parade',type:'DEFENSIV',power:30,acc:95,desc:'Glanzparade'},
+  blocken:{name:'Blocken',type:'DEFENSIV',power:25,acc:100,desc:'Solider Block'},
+  // TECHNIK moves
+  tunnel:{name:'Tunnel',type:'TECHNIK',power:35,acc:85,desc:'Gegner getunnelt'},
+  dribbling:{name:'Dribbling',type:'TECHNIK',power:30,acc:95,desc:'Elegantes Dribbling'},
+  hacke:{name:'Hacke',type:'TECHNIK',power:45,acc:80,desc:'Hackentrick'},
+  chipball:{name:'Chipball',type:'TECHNIK',power:40,acc:85,desc:'Feiner Chipball'},
+  // TAKTIK moves
+  spielaufbau:{name:'Spielaufbau',type:'TAKTIK',power:30,acc:100,desc:'Kluger Spielaufbau'},
+  pressing:{name:'Pressing',type:'TAKTIK',power:35,acc:90,desc:'Aggressives Pressing'},
+  konter:{name:'Konter',type:'TAKTIK',power:45,acc:80,desc:'Schneller Konter'},
+  taktikfoul:{name:'Taktikfoul',type:'TAKTIK',power:25,acc:100,desc:'Taktisches Foul'},
+  // HERZ moves
+  fangesang:{name:'Fangesang',type:'HERZ',power:35,acc:90,desc:'Kraft der Fans'},
+  loewenherz:{name:'Löwenherz',type:'HERZ',power:40,acc:85,desc:'Mut des Löwen'},
+  blutgrätsche:{name:'Blutgrätsche',type:'HERZ',power:50,acc:75,desc:'Alles geben!'},
+  motivation:{name:'Motivation',type:'HERZ',power:0,acc:100,desc:'Hebt Moral',heal:20},
+  // Special
+  turnen:{name:'Turnen',type:'ANGRIFF',power:30,acc:95,desc:'Gymnastische Attacke'},
+  barren:{name:'Barren',type:'DEFENSIV',power:25,acc:100,desc:'Am Barren gestählt'},
+  zeittackle:{name:'Zeittackle',type:'TAKTIK',power:55,acc:70,desc:'Tackle durch die Zeit'},
+  loewengebruell:{name:'Löwengebrüll',type:'HERZ',power:65,acc:70,desc:'Brüllen des Löwen'},
+  // Boxer moves
+  jab:{name:'Jab',type:'ANGRIFF',power:30,acc:95,desc:'Schneller Jab'},
+  haken:{name:'Haken',type:'ANGRIFF',power:45,acc:80,desc:'Wuchtiger Haken'},
+  uppercut:{name:'Uppercut',type:'ANGRIFF',power:55,acc:70,desc:'Verheerender Uppercut'},
+  deckung:{name:'Deckung',type:'DEFENSIV',power:0,acc:100,desc:'Erhöht Verteidigung',stat:'def',boost:2},
+  // Ringer moves
+  schwinger:{name:'Schwinger',type:'ANGRIFF',power:40,acc:85,desc:'Weiter Schwinger'},
+  ringkampf:{name:'Ringkampf',type:'DEFENSIV',power:35,acc:90,desc:'Kräftemessen'},
+  wurf:{name:'Wurf',type:'TECHNIK',power:45,acc:80,desc:'Judo-Wurf'},
+  ausdauer:{name:'Ausdauer',type:'HERZ',power:0,acc:100,desc:'Hebt Moral +25',heal:25}
+};
+
+// === PLAYER DEFINITIONS ===
+const PLAYERS=[
+  {id:'radi',name:'Radi Radenković',types:['HERZ','DEFENSIV'],baseHp:55,baseAtk:30,baseDef:50,baseSpd:35,
+    moves:['parade','fangesang','mauer','loewenherz'],desc:'Legendärer Torwart und Sänger',era:2},
+  {id:'rudi',name:'Rudi Brunnenmeier',types:['ANGRIFF','TECHNIK'],baseHp:45,baseAtk:55,baseDef:25,baseSpd:50,
+    moves:['torschuss','dribbling','fernschuss','chipball'],desc:'Der Blonde Engel',era:2},
+  {id:'grosser',name:'Peter Grosser',types:['TAKTIK','HERZ'],baseHp:50,baseAtk:35,baseDef:40,baseSpd:35,
+    moves:['spielaufbau','fangesang','pressing','motivation'],desc:'Der Kapitän',era:2},
+  {id:'heiss',name:'Alfred Heiß',types:['ANGRIFF'],baseHp:45,baseAtk:60,baseDef:20,baseSpd:45,
+    moves:['torschuss','kopfball','fernschuss','fallrueckzieher'],desc:'Die Tormaschine',era:2},
+  {id:'schwarzenbeck',name:'Schwarzenbeck',types:['DEFENSIV','TAKTIK'],baseHp:55,baseAtk:30,baseDef:55,baseSpd:30,
+    moves:['grätsche','mauer','taktikfoul','blocken'],desc:'Der Fels in der Brandung',era:2},
+  {id:'brenninger',name:'Dieter Brenninger',types:['ANGRIFF','HERZ'],baseHp:50,baseAtk:50,baseDef:30,baseSpd:40,
+    moves:['torschuss','blutgrätsche','kopfball','fangesang'],desc:'Kämpfer mit Herz',era:2},
+  {id:'bruells',name:'Albert Brülls',types:['TECHNIK','ANGRIFF'],baseHp:45,baseAtk:48,baseDef:25,baseSpd:52,
+    moves:['dribbling','hacke','torschuss','chipball'],desc:'Techniker der alten Schule',era:2},
+  {id:'lorant',name:'Werner Lorant',types:['TAKTIK','DEFENSIV'],baseHp:55,baseAtk:35,baseDef:50,baseSpd:30,
+    moves:['pressing','grätsche','konter','mauer'],desc:'Der Eiserne Trainer',era:3},
+  {id:'winkler',name:'Bernhard Winkler',types:['ANGRIFF','HERZ'],baseHp:50,baseAtk:52,baseDef:28,baseSpd:45,
+    moves:['torschuss','fangesang','kopfball','loewenherz'],desc:'Der Aufstiegsheld',era:3},
+  {id:'cerny',name:'Harald Cerny',types:['TECHNIK','ANGRIFF'],baseHp:45,baseAtk:48,baseDef:22,baseSpd:55,
+    moves:['dribbling','hacke','tunnel','torschuss'],desc:'Der Wiener Zauberer',era:3},
+  {id:'haessler',name:'Thomas Häßler',types:['TECHNIK','TAKTIK'],baseHp:42,baseAtk:45,baseDef:28,baseSpd:55,
+    moves:['chipball','spielaufbau','dribbling','hacke'],desc:'Icke aus Berlin',era:3},
+  {id:'bierofka',name:'Daniel Bierofka',types:['HERZ','TAKTIK'],baseHp:52,baseAtk:38,baseDef:38,baseSpd:40,
+    moves:['fangesang','loewenherz','spielaufbau','motivation'],desc:'Mr. 1860',era:4},
+  {id:'moelders',name:'Sascha Mölders',types:['ANGRIFF','HERZ'],baseHp:55,baseAtk:55,baseDef:35,baseSpd:25,
+    moves:['kopfball','torschuss','blutgrätsche','fangesang'],desc:'Das Alpha-Tier',era:4},
+  {id:'wagner',name:'Manfred Wagner',types:['DEFENSIV','HERZ'],baseHp:55,baseAtk:28,baseDef:52,baseSpd:32,
+    moves:['grätsche','mauer','fangesang','blocken'],desc:'Zuverlässiger Verteidiger',era:4},
+  {id:'turner',name:'Heinrich Turner',types:['TAKTIK'],baseHp:40,baseAtk:35,baseDef:35,baseSpd:40,
+    moves:['turnen','spielaufbau','pressing','taktikfoul'],desc:'Gründungszeit-Turner',era:1},
+  {id:'gymnast',name:'Wilhelm Gymnast',types:['DEFENSIV'],baseHp:48,baseAtk:28,baseDef:48,baseSpd:30,
+    moves:['barren','grätsche','mauer','blocken'],desc:'Stählerner Gymnast',era:1},
+  {id:'turnmeister',name:'Franz Turnmeister',types:['ANGRIFF','TAKTIK'],baseHp:50,baseAtk:50,baseDef:40,baseSpd:38,
+    moves:['turnen','konter','zeittackle','pressing'],desc:'Meister der Turner',era:1},
+  {id:'loewe',name:'Der ewige Löwe',types:['ANGRIFF','DEFENSIV','TECHNIK','TAKTIK','HERZ'],baseHp:70,baseAtk:60,baseDef:55,baseSpd:50,
+    moves:['loewengebruell','zeittackle','fallrueckzieher','loewenherz'],desc:'Geist des TSV 1860',era:4},
+  // === STARTER ===
+  {id:'boxer',name:'Münchner Boxer',types:['ANGRIFF','HERZ'],baseHp:48,baseAtk:55,baseDef:30,baseSpd:45,
+    moves:['jab','haken','deckung','fangesang'],desc:'Ein Boxer aus München - schnell und stark!',era:0},
+  {id:'starterturner',name:'Giesinger Turner',types:['DEFENSIV','TECHNIK'],baseHp:50,baseAtk:30,baseDef:50,baseSpd:38,
+    moves:['turnen','barren','mauer','motivation'],desc:'Ein Turner - stählerner Körper und Geist!',era:0},
+  {id:'stuermer',name:'Straßenkicker',types:['TAKTIK','ANGRIFF'],baseHp:45,baseAtk:45,baseDef:28,baseSpd:50,
+    moves:['torschuss','dribbling','spielaufbau','fangesang'],desc:'Ein Fußballer von der Straße - clever und treffsicher!',era:0},
+  // Wild encounter extras
+  {id:'sparring',name:'Sparringspartner',types:['ANGRIFF'],baseHp:35,baseAtk:40,baseDef:25,baseSpd:35,
+    moves:['jab','schwinger','deckung','ausdauer'],desc:'Ein Boxer zum Üben',era:0},
+  {id:'ringer',name:'Ringer',types:['DEFENSIV','ANGRIFF'],baseHp:50,baseAtk:40,baseDef:45,baseSpd:25,
+    moves:['ringkampf','wurf','schwinger','ausdauer'],desc:'Kräftiger Ringer',era:0}
+];
+
+function makePlayerInstance(id,level){
+  const def=PLAYERS.find(p=>p.id===id);
+  if(!def)return null;
+  const lv=level||5;
+  const hp=Math.floor(def.baseHp*(1+lv*0.12));
+  return{
+    id:def.id,name:def.name,types:[...def.types],level:lv,
+    hp:hp,maxHp:hp,
+    atk:Math.floor(def.baseAtk*(1+lv*0.1)),
+    def:Math.floor(def.baseDef*(1+lv*0.1)),
+    spd:Math.floor(def.baseSpd*(1+lv*0.1)),
+    moral:80,xp:0,xpNext:lv*25+50,
+    moves:def.moves.slice(0,4),
+    desc:def.desc,era:def.era,
+    atkBoost:0,defBoost:0
+  };
+}
+
+function gainXP(player,amount){
+  player.xp+=amount;
+  let leveled=false;
+  while(player.xp>=player.xpNext){
+    player.xp-=player.xpNext;
+    player.level++;
+    const def=PLAYERS.find(p=>p.id===player.id);
+    player.maxHp=Math.floor(def.baseHp*(1+player.level*0.12));
+    player.hp=player.maxHp;
+    player.atk=Math.floor(def.baseAtk*(1+player.level*0.1));
+    player.def=Math.floor(def.baseDef*(1+player.level*0.1));
+    player.spd=Math.floor(def.baseSpd*(1+player.level*0.1));
+    player.xpNext=player.level*25+50;
+    leveled=true;
+  }
+  return leveled;
+}
+
+// === SPRITE DATA ===
+// Color palettes per sprite: 0=transparent,1=dark,2=mid,3=light
+const PAL={
+  player:['transparent','#1a3a5c','#2a6aac','#e8e8e0'],
+  playerSkin:['transparent','#8a5a2a','#e0b080','#e8e8e0'],
+  grass:['transparent','#1a5a1a','#2a8a2a','#5aba5a'],
+  path:['transparent','#8a7040','#c0a060','#d0c8a0'],
+  tree:['transparent','#1a5a1a','#2a8a2a','#5a3a1a'],
+  building:['transparent','#5a3a1a','#8a5a2a','#c0a060'],
+  water:['transparent','#1a3a5c','#2a6aac','#6abadc'],
+  npc:['transparent','#5a3a1a','#c04040','#e8e8e0'],
+  portal:['transparent','#4020a0','#8040e0','#c080ff'],
+  arena:['transparent','#8a7040','#d0a020','#e8d840'],
+  sepia:['transparent','#5a4a2a','#8a7040','#c0a060']
+};
+
+// 16x16 tile sprites as arrays of color indices
+const TILES={};
+
+// grass tile
+TILES.grass=(function(){
+  const d=new Array(256).fill(2);
+  for(let i=0;i<256;i++){
+    if(Math.random()<0.15)d[i]=3;
+    if(Math.random()<0.1)d[i]=1;
+  }
+  return d;
+})();
+
+// tall grass (encounters)
+TILES.tallgrass=(function(){
+  const d=new Array(256).fill(2);
+  for(let i=0;i<256;i++){
+    const x=i%16,y=Math.floor(i/16);
+    if(y>2&&(x+y)%3===0)d[i]=3;
+    if(y<4)d[i]=1;
+    if(y>12&&x%2===0)d[i]=3;
+  }
+  // add grass blade pattern
+  for(let bx=1;bx<15;bx+=3){
+    for(let by=2;by<14;by+=4){
+      for(let dy=0;dy<6&&by+dy<16;dy++){
+        d[(by+dy)*16+bx]=dy<3?1:3;
+        if(bx+1<16)d[(by+dy)*16+bx+1]=dy<2?3:1;
+      }
+    }
+  }
+  return d;
+})();
+
+TILES.path=(function(){
+  const d=new Array(256).fill(2);
+  for(let i=0;i<256;i++){
+    if(Math.random()<0.2)d[i]=3;
+    if(Math.random()<0.08)d[i]=1;
+  }
+  return d;
+})();
+
+TILES.tree=(function(){
+  const d=new Array(256).fill(0);
+  // trunk
+  for(let y=10;y<16;y++)for(let x=6;x<10;x++)d[y*16+x]=3;
+  // leaves circle
+  for(let y=0;y<11;y++)for(let x=0;x<16;x++){
+    const dx=x-8,dy=y-5;
+    if(dx*dx+dy*dy<30)d[y*16+x]=Math.random()<0.3?1:2;
+  }
+  return d;
+})();
+
+TILES.building=(function(){
+  const d=new Array(256).fill(0);
+  // walls
+  for(let y=2;y<16;y++)for(let x=1;x<15;x++)d[y*16+x]=2;
+  // roof
+  for(let y=0;y<3;y++)for(let x=y;x<16-y;x++)d[y*16+x]=1;
+  // door
+  for(let y=10;y<16;y++)for(let x=6;x<10;x++)d[y*16+x]=3;
+  // windows
+  for(let y=5;y<8;y++){for(let x=2;x<5;x++)d[y*16+x]=3;for(let x=11;x<14;x++)d[y*16+x]=3;}
+  return d;
+})();
+
+TILES.water=(function(){
+  const d=new Array(256).fill(2);
+  for(let i=0;i<256;i++){
+    if(Math.random()<0.15)d[i]=3;
+    if(Math.random()<0.1)d[i]=1;
+  }
+  return d;
+})();
+
+TILES.portal=(function(){
+  const d=new Array(256).fill(0);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const dx=x-8,dy=y-8,dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<7&&dist>3)d[y*16+x]=((x+y)%3===0)?3:2;
+    if(dist<=3&&dist>1)d[y*16+x]=1;
+    if(dist<=1)d[y*16+x]=3;
+  }
+  return d;
+})();
+
+TILES.arena=(function(){
+  const d=new Array(256).fill(0);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    if(y<2||y>13||x<1||x>14)continue;
+    if(y<4)d[y*16+x]=3; // gold roof
+    else d[y*16+x]=2; // walls
+  }
+  // pillars
+  for(let y=4;y<14;y++){d[y*16+1]=1;d[y*16+14]=1;}
+  // door
+  for(let y=10;y<14;y++)for(let x=6;x<10;x++)d[y*16+x]=3;
+  // star on top
+  d[1*16+7]=3;d[1*16+8]=3;d[0*16+7]=3;d[0*16+8]=3;
+  return d;
+})();
+
+TILES.sign=(function(){
+  const d=new Array(256).fill(0);
+  for(let y=4;y<10;y++)for(let x=3;x<13;x++)d[y*16+x]=2;
+  for(let y=3;y<5;y++)for(let x=4;x<12;x++)d[y*16+x]=3;
+  for(let y=10;y<16;y++)for(let x=7;x<9;x++)d[y*16+x]=1;
+  return d;
+})();
+
+function cacheTile(tileData,pal){
+  const cv=document.createElement('canvas');
+  cv.width=16;cv.height=16;
+  const cx=cv.getContext('2d');
+  for(let i=0;i<256;i++){
+    const c=pal[tileData[i]];
+    if(c==='transparent')continue;
+    cx.fillStyle=c;
+    cx.fillRect(i%16,Math.floor(i/16),1,1);
+  }
+  return cv;
+}
+
+// Pre-render tiles
+const TILE_CACHE={};
+function initTileCache(){
+  TILE_CACHE.grass=cacheTile(TILES.grass,PAL.grass);
+  TILE_CACHE.tallgrass=cacheTile(TILES.tallgrass,PAL.grass);
+  TILE_CACHE.path=cacheTile(TILES.path,PAL.path);
+  TILE_CACHE.tree=cacheTile(TILES.tree,['transparent','#1a5a1a','#2a8a2a','#5a3a1a']);
+  TILE_CACHE.building=cacheTile(TILES.building,PAL.building);
+  TILE_CACHE.water=cacheTile(TILES.water,PAL.water);
+  TILE_CACHE.portal=cacheTile(TILES.portal,PAL.portal);
+  TILE_CACHE.arena=cacheTile(TILES.arena,PAL.arena);
+  TILE_CACHE.sign=cacheTile(TILES.sign,['transparent','#5a3a1a','#c0a060','#e8e8e0']);
+  // sepia variants
+  TILE_CACHE.grass_s=cacheTile(TILES.grass,PAL.sepia);
+  TILE_CACHE.tallgrass_s=cacheTile(TILES.tallgrass,['transparent','#5a4a2a','#8a7040','#b09050']);
+  TILE_CACHE.path_s=cacheTile(TILES.path,['transparent','#4a3a1a','#7a6030','#a08050']);
+  TILE_CACHE.tree_s=cacheTile(TILES.tree,['transparent','#5a4a2a','#8a7040','#4a3a1a']);
+  TILE_CACHE.building_s=cacheTile(TILES.building,['transparent','#4a3a1a','#7a5a2a','#a08050']);
+  TILE_CACHE.arena_s=cacheTile(TILES.arena,['transparent','#6a5a2a','#a08040','#c0a050']);
+}
+
+// === PLAYER SPRITE ===
+const PLAYER_FRAMES={};
+function initPlayerSprite(){
+  // 4 directions x 2 frames, 16x16
+  const dirs=['down','up','left','right'];
+  const bodies=[
+    // down frame 0
+    [
+      '0000001111000000',
+      '0000011331100000',
+      '0000113333110000',
+      '0000133333310000',
+      '0000133233310000',
+      '0000013333100000',
+      '0000001331000000',
+      '0000012222100000',
+      '0000122222210000',
+      '0000122122210000',
+      '0000122222210000',
+      '0000012222100000',
+      '0000001221000000',
+      '0000001111000000',
+      '0000011001100000',
+      '0000011001100000'
+    ],
+    // down frame 1
+    [
+      '0000001111000000',
+      '0000011331100000',
+      '0000113333110000',
+      '0000133333310000',
+      '0000133233310000',
+      '0000013333100000',
+      '0000001331000000',
+      '0000012222100000',
+      '0000122222210000',
+      '0000122122210000',
+      '0000122222210000',
+      '0000012222100000',
+      '0000011221000000',
+      '0000110011000000',
+      '0000110001100000',
+      '0000000000000000'
+    ],
+    // up frame 0
+    [
+      '0000001111000000',
+      '0000011111100000',
+      '0000111111110000',
+      '0000111111110000',
+      '0000111111110000',
+      '0000011111100000',
+      '0000001111000000',
+      '0000012222100000',
+      '0000122222210000',
+      '0000122222210000',
+      '0000122222210000',
+      '0000012222100000',
+      '0000001221000000',
+      '0000001111000000',
+      '0000011001100000',
+      '0000011001100000'
+    ],
+    // up frame 1
+    [
+      '0000001111000000',
+      '0000011111100000',
+      '0000111111110000',
+      '0000111111110000',
+      '0000111111110000',
+      '0000011111100000',
+      '0000001111000000',
+      '0000012222100000',
+      '0000122222210000',
+      '0000122222210000',
+      '0000122222210000',
+      '0000012222100000',
+      '0000011221000000',
+      '0000110011000000',
+      '0000110001100000',
+      '0000000000000000'
+    ],
+    // left frame 0
+    [
+      '0000011110000000',
+      '0000111111000000',
+      '0001111111000000',
+      '0001333331000000',
+      '0001323331000000',
+      '0000133310000000',
+      '0000011100000000',
+      '0000122210000000',
+      '0001222221000000',
+      '0001222221000000',
+      '0001222221000000',
+      '0000122210000000',
+      '0000012210000000',
+      '0000011100000000',
+      '0000110110000000',
+      '0000110110000000'
+    ],
+    // left frame 1
+    [
+      '0000011110000000',
+      '0000111111000000',
+      '0001111111000000',
+      '0001333331000000',
+      '0001323331000000',
+      '0000133310000000',
+      '0000011100000000',
+      '0000122210000000',
+      '0001222221000000',
+      '0001222221000000',
+      '0001222221000000',
+      '0000122210000000',
+      '0000112100000000',
+      '0001100000000000',
+      '0001100000000000',
+      '0000000000000000'
+    ],
+    // right frame 0
+    [
+      '0000001111000000',
+      '0000011111100000',
+      '0000011111110000',
+      '0000011333310000',
+      '0000011333210000',
+      '0000001333100000',
+      '0000000111000000',
+      '0000001222100000',
+      '0000012222210000',
+      '0000012222210000',
+      '0000012222210000',
+      '0000001222100000',
+      '0000001221000000',
+      '0000000111000000',
+      '0000001101100000',
+      '0000001101100000'
+    ],
+    // right frame 1
+    [
+      '0000001111000000',
+      '0000011111100000',
+      '0000011111110000',
+      '0000011333310000',
+      '0000011333210000',
+      '0000001333100000',
+      '0000000111000000',
+      '0000001222100000',
+      '0000012222210000',
+      '0000012222210000',
+      '0000012222210000',
+      '0000001222100000',
+      '0000000122100000',
+      '0000000001110000',
+      '0000000001100000',
+      '0000000000000000'
+    ]
+  ];
+  const skinPal=['transparent','#5a3a1a','#2a6aac','#e0b080'];
+  for(let d=0;d<4;d++){
+    for(let f=0;f<2;f++){
+      const cv=document.createElement('canvas');cv.width=16;cv.height=16;
+      const cx=cv.getContext('2d');
+      const row=bodies[d*2+f];
+      for(let y=0;y<16;y++){
+        for(let x=0;x<16;x++){
+          const v=parseInt(row[y][x]);
+          if(v===0)continue;
+          cx.fillStyle=skinPal[v];
+          cx.fillRect(x,y,1,1);
+        }
+      }
+      PLAYER_FRAMES[dirs[d]+'_'+f]=cv;
+    }
+  }
+}
+
+// === NPC SPRITES ===
+function makeNPCSprite(hairColor,shirtColor,pantColor){
+  const cv=document.createElement('canvas');cv.width=16;cv.height=16;
+  const cx=cv.getContext('2d');
+  // head
+  cx.fillStyle=hairColor;
+  cx.fillRect(5,0,6,3);
+  cx.fillStyle='#e0b080';
+  cx.fillRect(5,3,6,4);
+  cx.fillStyle='#081820';
+  cx.fillRect(6,4,1,1);cx.fillRect(9,4,1,1);
+  // body
+  cx.fillStyle=shirtColor;
+  cx.fillRect(4,7,8,5);
+  // pants
+  cx.fillStyle=pantColor;
+  cx.fillRect(5,12,2,4);cx.fillRect(9,12,2,4);
+  return cv;
+}
+
+// === BATTLE SPRITES (48x48) ===
+function makeBattleSprite(id){
+  const cv=document.createElement('canvas');cv.width=48;cv.height=48;
+  const cx=cv.getContext('2d');
+  const def=PLAYERS.find(p=>p.id===id);
+  if(!def)return cv;
+  const isLoewe=id==='loewe';
+
+  if(isLoewe){
+    // Lion spirit
+    cx.fillStyle='#d0a020';
+    // body
+    for(let y=12;y<40;y++)for(let x=8;x<40;x++){
+      const dx=x-24,dy=y-26;
+      if(dx*dx/(16*16)+dy*dy/(14*14)<1){
+        cx.fillRect(x,y,1,1);
+      }
+    }
+    // mane
+    cx.fillStyle='#8a5a0a';
+    for(let y=4;y<28;y++)for(let x=4;x<44;x++){
+      const dx=x-24,dy=y-16;
+      if(dx*dx/(20*20)+dy*dy/(12*12)<1&&dx*dx/(14*14)+dy*dy/(8*8)>1){
+        cx.fillRect(x,y,1,1);
+      }
+    }
+    // face
+    cx.fillStyle='#e0b040';
+    cx.fillRect(16,14,16,12);
+    // eyes
+    cx.fillStyle='#081820';
+    cx.fillRect(18,17,3,3);cx.fillRect(27,17,3,3);
+    cx.fillStyle='#e8e8e0';
+    cx.fillRect(19,18,1,1);cx.fillRect(28,18,1,1);
+    // nose
+    cx.fillStyle='#8a5a0a';
+    cx.fillRect(22,22,4,2);
+    // mouth
+    cx.fillStyle='#c04040';
+    cx.fillRect(20,25,8,2);
+    // crown
+    cx.fillStyle='#e8d840';
+    cx.fillRect(16,8,16,3);
+    cx.fillRect(18,5,2,3);cx.fillRect(23,5,2,3);cx.fillRect(28,5,2,3);
+    // legs
+    cx.fillStyle='#d0a020';
+    cx.fillRect(12,38,6,10);cx.fillRect(30,38,6,10);
+  } else {
+    // Human player sprite
+    const isGK=id==='radi';
+    const shirtCol=isGK?'#40a040':'#2a6aac';
+    // head
+    cx.fillStyle='#6a4a2a';
+    cx.fillRect(16,2,16,8);
+    cx.fillStyle='#e0b080';
+    cx.fillRect(16,8,16,10);
+    // eyes
+    cx.fillStyle='#081820';
+    cx.fillRect(19,11,3,2);cx.fillRect(26,11,3,2);
+    cx.fillStyle='#e8e8e0';
+    cx.fillRect(20,11,1,1);cx.fillRect(27,11,1,1);
+    // mouth
+    cx.fillStyle='#c08060';
+    cx.fillRect(21,15,6,1);
+    // shirt
+    cx.fillStyle=shirtCol;
+    cx.fillRect(12,18,24,14);
+    // number
+    cx.fillStyle='#e8e8e0';
+    cx.fillRect(22,22,4,6);
+    // shorts
+    cx.fillStyle='#e8e8e0';
+    cx.fillRect(14,32,20,6);
+    // legs
+    cx.fillStyle='#e0b080';
+    cx.fillRect(16,38,6,6);cx.fillRect(26,38,6,6);
+    // boots
+    cx.fillStyle='#081820';
+    cx.fillRect(16,44,6,4);cx.fillRect(26,44,6,4);
+    // arms
+    cx.fillStyle=shirtCol;
+    cx.fillRect(8,18,4,12);cx.fillRect(36,18,4,12);
+    cx.fillStyle='#e0b080';
+    cx.fillRect(8,30,4,4);cx.fillRect(36,30,4,4);
+  }
+  return cv;
+}
+
+const BATTLE_SPRITE_CACHE={};
+function getBattleSprite(id){
+  if(!BATTLE_SPRITE_CACHE[id])BATTLE_SPRITE_CACHE[id]=makeBattleSprite(id);
+  return BATTLE_SPRITE_CACHE[id];
+}
+
+// === MAPS ===
+// Tile types: 0=grass,1=tallgrass,2=path,3=tree,4=building,5=water,6=portal,7=arena,8=sign
+// Collision: tree,building,water,sign = blocked
+const BLOCKED=new Set([3,4,5,8]);
+
+function generateMap(idx){
+  const map=new Array(MH).fill(null).map(()=>new Array(MW).fill(0));
+  const npcs=[];
+  const portals=[];
+  const arenaPos={x:0,y:0};
+
+  if(idx===0){
+    // GIESING HUB
+    // paths
+    for(let x=0;x<MW;x++){map[10][x]=2;map[9][x]=2;}
+    for(let y=0;y<MH;y++){map[y][15]=2;map[y][14]=2;}
+    // trees border
+    for(let x=0;x<MW;x++){map[0][x]=3;map[MH-1][x]=3;}
+    for(let y=0;y<MH;y++){map[y][0]=3;map[y][MW-1]=3;}
+    // tall grass areas
+    for(let y=3;y<8;y++)for(let x=3;x<12;x++)map[y][x]=1;
+    for(let y=13;y<18;y++)for(let x=18;x<27;x++)map[y][x]=1;
+    // buildings
+    map[4][20]=4;map[4][21]=4;map[5][20]=4;map[5][21]=4;
+    map[13][5]=4;map[13][6]=4;map[14][5]=4;map[14][6]=4;
+    // portals to eras
+    map[5][3]=6;portals.push({x:3,y:5,toMap:1,toX:15,toY:17,label:'1848'});
+    map[5][27]=6;portals.push({x:27,y:5,toMap:2,toX:15,toY:17,label:'1966'});
+    map[15][3]=6;portals.push({x:3,y:15,toMap:3,toX:15,toY:17,label:'1994'});
+    map[15][27]=6;portals.push({x:27,y:15,toMap:4,toX:15,toY:17,label:'2024'});
+    // signs near portals
+    map[6][3]=8;map[6][27]=8;map[16][3]=8;map[16][27]=8;
+    // NPCs
+    npcs.push({x:12,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#e8e8e0'),
+      dialog:['Willkommen in Giesing!','Hier ist das Herz von 1860.','Betritt die Zeitportale, um die','Geschichte von 1860 zu retten!'],
+      name:'Fan Hans'});
+    npcs.push({x:18,y:10,sprite:makeNPCSprite('#e8d840','#c04040','#081820'),
+      dialog:['Im hohen Gras triffst du auf','wilde Sportler - Boxer, Turner','und Ringer! Besiege sie und','sie schließen sich deinem Team an.'],
+      name:'Trainerin Lisa'});
+    npcs.push({x:22,y:8,sprite:makeNPCSprite('#081820','#e8e8e0','#2a6aac'),
+      dialog:['Drücke SPACE zum Bestätigen,','Pfeiltasten zum Bewegen.','M öffnet das Menü.'],
+      name:'Erklärbär'});
+  }
+  else if(idx===1){
+    // 1848 ALTER BOTANISCHER GARTEN
+    for(let x=0;x<MW;x++){map[0][x]=3;map[MH-1][x]=3;}
+    for(let y=0;y<MH;y++){map[y][0]=3;map[y][MW-1]=3;}
+    for(let x=5;x<25;x++){map[10][x]=2;map[9][x]=2;}
+    for(let y=3;y<17;y++){map[y][15]=2;map[y][14]=2;}
+    // tall grass
+    for(let y=3;y<8;y++)for(let x=2;x<12;x++)map[y][x]=1;
+    for(let y=12;y<17;y++)for(let x=2;x<12;x++)map[y][x]=1;
+    for(let y=3;y<8;y++)for(let x=18;x<28;x++)map[y][x]=1;
+    // arena at top
+    map[2][14]=7;map[2][15]=7;map[3][14]=7;map[3][15]=7;
+    arenaPos.x=14;arenaPos.y=3;
+    // buildings
+    map[12][20]=4;map[12][21]=4;map[13][20]=4;map[13][21]=4;
+    map[7][24]=4;map[7][25]=4;map[8][24]=4;map[8][25]=4;
+    // portal back
+    map[18][15]=6;portals.push({x:15,y:18,toMap:0,toX:3,toY:6,label:'Giesing'});
+    // NPCs
+    npcs.push({x:12,y:10,sprite:makeNPCSprite('#5a3a1a','#c0a060','#5a3a1a'),
+      dialog:['Wir befinden uns im Jahre 1848!','Hier wurde der TSV gegründet.','Die Turner waren die Ersten!'],
+      name:'Bürger Wilhelm'});
+    npcs.push({x:20,y:10,sprite:makeNPCSprite('#8a5a2a','#8a7040','#5a3a1a'),
+      dialog:['Turnvater Friedrich wartet','in der Arena auf dich!','Sei vorbereitet!'],
+      name:'Turner Josef',battle:true,team:[makePlayerInstance('gymnast',6)],
+      defeated:false,defKey:'1_turner'});
+    npcs.push({x:8,y:14,sprite:makeNPCSprite('#6a4a2a','#a08050','#4a3a1a'),
+      dialog:['Die Turnbewegung ist stark!','Turnen stählt Körper und Geist.'],
+      name:'Turnerin Anna',battle:true,team:[makePlayerInstance('turner',5)],
+      defeated:false,defKey:'1_anna'});
+  }
+  else if(idx===2){
+    // 1966 GRÜNWALDER STADION
+    for(let x=0;x<MW;x++){map[0][x]=3;map[MH-1][x]=3;}
+    for(let y=0;y<MH;y++){map[y][0]=3;map[y][MW-1]=3;}
+    for(let x=3;x<27;x++){map[10][x]=2;map[9][x]=2;}
+    for(let y=2;y<18;y++){map[y][15]=2;map[y][14]=2;}
+    // pitch area
+    for(let y=12;y<17;y++)for(let x=18;x<28;x++)map[y][x]=1;
+    for(let y=3;y<8;y++)for(let x=3;x<12;x++)map[y][x]=1;
+    for(let y=12;y<17;y++)for(let x=3;x<12;x++)map[y][x]=1;
+    // arena
+    map[2][14]=7;map[2][15]=7;map[3][14]=7;map[3][15]=7;
+    arenaPos.x=14;arenaPos.y=3;
+    // buildings
+    map[7][22]=4;map[7][23]=4;map[8][22]=4;map[8][23]=4;
+    // portal
+    map[18][15]=6;portals.push({x:15,y:18,toMap:0,toX:27,toY:6,label:'Giesing'});
+    // NPCs
+    npcs.push({x:10,y:10,sprite:makeNPCSprite('#e8d840','#2a6aac','#e8e8e0'),
+      dialog:['1966 - Die goldene Ära!','Radi und Rudi waren Götter!','Was für eine Mannschaft!'],
+      name:'Reporter Fritz'});
+    npcs.push({x:22,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#1a3a5c'),
+      dialog:['Ich trainiere wie Rudi!','Zeig mir was du kannst!'],
+      name:'Nachwuchs Sepp',battle:true,team:[makePlayerInstance('brenninger',10),makePlayerInstance('bruells',9)],
+      defeated:false,defKey:'2_sepp'});
+    npcs.push({x:6,y:14,sprite:makeNPCSprite('#e8e8e0','#2a6aac','#1a3a5c'),
+      dialog:['Das Grünwalder bebt!','Die Fans singen!'],
+      name:'Fan Gustl',battle:true,team:[makePlayerInstance('grosser',9)],
+      defeated:false,defKey:'2_gustl'});
+  }
+  else if(idx===3){
+    // 1994 OLYMPIASTADION
+    for(let x=0;x<MW;x++){map[0][x]=3;map[MH-1][x]=3;}
+    for(let y=0;y<MH;y++){map[y][0]=3;map[y][MW-1]=3;}
+    for(let x=2;x<28;x++){map[10][x]=2;map[9][x]=2;}
+    for(let y=2;y<18;y++){map[y][15]=2;map[y][14]=2;}
+    for(let y=3;y<8;y++)for(let x=3;x<12;x++)map[y][x]=1;
+    for(let y=12;y<17;y++)for(let x=18;x<27;x++)map[y][x]=1;
+    for(let y=3;y<8;y++)for(let x=18;x<27;x++)map[y][x]=1;
+    map[2][14]=7;map[2][15]=7;map[3][14]=7;map[3][15]=7;
+    arenaPos.x=14;arenaPos.y=3;
+    map[13][5]=4;map[13][6]=4;map[14][5]=4;map[14][6]=4;
+    map[18][15]=6;portals.push({x:15,y:18,toMap:0,toX:3,toY:16,label:'Giesing'});
+    npcs.push({x:12,y:10,sprite:makeNPCSprite('#081820','#e8e8e0','#081820'),
+      dialog:['1994 - Der Aufstieg!','Winkler hat es geschafft!','Bundesliga, wir kommen!'],
+      name:'Journalist Helmut'});
+    npcs.push({x:20,y:10,sprite:makeNPCSprite('#6a4a2a','#2a6aac','#e8e8e0'),
+      dialog:['Lorant ist ein harter Trainer!','Bist du bereit für die','Olympia-Arena?'],
+      name:'Spieler Markus',battle:true,team:[makePlayerInstance('cerny',14),makePlayerInstance('haessler',13)],
+      defeated:false,defKey:'3_markus'});
+    npcs.push({x:8,y:6,sprite:makeNPCSprite('#c04040','#e8e8e0','#1a3a5c'),
+      dialog:['Die 90er waren wild!','Aufstieg und Abstieg im Wechsel!'],
+      name:'Ultra Kai',battle:true,team:[makePlayerInstance('wagner',12)],
+      defeated:false,defKey:'3_kai'});
+  }
+  else if(idx===4){
+    // 2024 GRÜNWALDER NEU
+    for(let x=0;x<MW;x++){map[0][x]=3;map[MH-1][x]=3;}
+    for(let y=0;y<MH;y++){map[y][0]=3;map[y][MW-1]=3;}
+    for(let x=2;x<28;x++){map[10][x]=2;map[9][x]=2;}
+    for(let y=2;y<18;y++){map[y][15]=2;map[y][14]=2;}
+    for(let y=3;y<8;y++)for(let x=3;x<13;x++)map[y][x]=1;
+    for(let y=12;y<17;y++)for(let x=3;x<13;x++)map[y][x]=1;
+    for(let y=12;y<17;y++)for(let x=18;x<27;x++)map[y][x]=1;
+    map[2][14]=7;map[2][15]=7;map[3][14]=7;map[3][15]=7;
+    arenaPos.x=14;arenaPos.y=3;
+    map[7][24]=4;map[7][25]=4;map[8][24]=4;map[8][25]=4;
+    map[18][15]=6;portals.push({x:15,y:18,toMap:0,toX:27,toY:16,label:'Giesing'});
+    npcs.push({x:12,y:10,sprite:makeNPCSprite('#2a6aac','#e8e8e0','#1a3a5c'),
+      dialog:['2024 - Die Zukunft!','1860 lebt ewig!','Der ewige Löwe wartet...'],
+      name:'Fan Mia'});
+    npcs.push({x:20,y:6,sprite:makeNPCSprite('#081820','#2a6aac','#e8e8e0'),
+      dialog:['Mölders war eine Legende!','Aber kannst du mich besiegen?'],
+      name:'Kicker Tom',battle:true,team:[makePlayerInstance('moelders',18),makePlayerInstance('bierofka',17)],
+      defeated:false,defKey:'4_tom'});
+    npcs.push({x:24,y:14,sprite:makeNPCSprite('#d0a020','#1a3a5c','#081820'),
+      dialog:['Die Zukunft gehört dem TSV!','Einmal Löwe, immer Löwe!'],
+      name:'Ultra Sarah',battle:true,team:[makePlayerInstance('wagner',16)],
+      defeated:false,defKey:'4_sarah'});
+  }
+  return{tiles:map,npcs,portals,arenaPos,idx};
+}
+
+// Arena leaders
+const ARENA_LEADERS=[
+  {name:'Turnvater Friedrich',dialog:['Ich bin Turnvater Friedrich!','Die Gründer des TSV fordern','dich heraus! Zeig was du kannst!'],
+    team:[makePlayerInstance('turner',8),makePlayerInstance('gymnast',9),makePlayerInstance('turnmeister',11)],
+    winDialog:['Stark! Du ehrst die Gründer!','Nimm diesen Turner als Zeichen.'],
+    reward:'turnmeister',badge:0},
+  {name:'Trainer Max Merkel',dialog:['Ich bin Trainer Max Merkel!','Meine goldene Mannschaft wird','dich vom Platz fegen!'],
+    team:[makePlayerInstance('rudi',14),makePlayerInstance('radi',13),makePlayerInstance('heiss',15)],
+    winDialog:['Unglaublich! Du spielst wie','ein wahrer Sechzger!'],
+    reward:'rudi',badge:1},
+  {name:'Kapitän Winkler',dialog:['Der Aufstieg war mein','größter Moment!','Kannst du das toppen?'],
+    team:[makePlayerInstance('lorant',17),makePlayerInstance('cerny',18),makePlayerInstance('winkler',20)],
+    winDialog:['Was für ein Spiel!','Du bist ein Aufstiegsheld!'],
+    reward:'winkler',badge:2},
+  {name:'Der ewige Löwe',dialog:['Ich bin der Geist des TSV!','Alle Epochen vereint!','Nur ein wahrer Fan kann','mich besiegen!'],
+    team:[makePlayerInstance('bierofka',22),makePlayerInstance('moelders',23),makePlayerInstance('loewe',25)],
+    winDialog:['Du hast es geschafft!','TSV 1860 ist gerettet!','Die Geschichte lebt weiter!','EINMAL LÖWE, IMMER LÖWE!'],
+    reward:'loewe',badge:3}
+];
+
+let MAPS=[];
+function initMaps(){
+  MAPS=[];
+  for(let i=0;i<5;i++)MAPS.push(generateMap(i));
+}
+
+// === AUDIO ===
+let audioCtx=null;
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+}
+
+function playNote(freq,dur,type,vol){
+  if(!audioCtx||!GS.musicOn)return;
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.type=type||'square';
+  o.frequency.value=freq;
+  g.gain.value=vol||0.08;
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();o.stop(audioCtx.currentTime+dur);
+}
+
+function playMelody(notes,tempo){
+  if(!audioCtx||!GS.musicOn)return;
+  let t=0;
+  notes.forEach(n=>{
+    if(n[0]>0){
+      setTimeout(()=>playNote(n[0],n[1]*(60/tempo),'square',0.06),t*1000);
+    }
+    t+=n[1]*(60/tempo);
+  });
+}
+
+function playSFX(type){
+  if(!audioCtx)return;
+  if(type==='hit'){playNote(200,0.1,'square',0.1);setTimeout(()=>playNote(150,0.15,'square',0.08),100);}
+  if(type==='superHit'){playNote(300,0.1,'square',0.12);setTimeout(()=>playNote(400,0.1,'square',0.1),80);setTimeout(()=>playNote(200,0.2,'square',0.08),160);}
+  if(type==='miss'){playNote(100,0.3,'sawtooth',0.05);}
+  if(type==='levelup'){
+    [523,587,659,698,784].forEach((f,i)=>setTimeout(()=>playNote(f,0.15,'square',0.1),i*120));
+  }
+  if(type==='catch'){
+    [400,500,600,800].forEach((f,i)=>setTimeout(()=>playNote(f,0.12,'square',0.1),i*100));
+  }
+  if(type==='select'){playNote(600,0.05,'square',0.06);}
+  if(type==='confirm'){playNote(800,0.08,'square',0.08);}
+  if(type==='encounter'){
+    [300,400,350,450,500].forEach((f,i)=>setTimeout(()=>playNote(f,0.1,'square',0.1),i*80));
+  }
+  if(type==='victory'){
+    const notes=[523,523,523,523,415,466,523,0,466,523];
+    notes.forEach((f,i)=>{if(f>0)setTimeout(()=>playNote(f,0.2,'square',0.1),i*150);});
+  }
+}
+
+let bgmInterval=null;
+function startBGM(type){
+  stopBGM();
+  if(!audioCtx||!GS.musicOn)return;
+  const melodies={
+    title:[[392,1],[440,1],[494,1],[523,2],[494,1],[440,1],[392,2],[0,1],[349,1],[392,1],[440,1],[494,2],[440,1],[392,1],[349,2]],
+    overworld:[[262,1],[294,1],[330,1],[349,1],[330,1],[294,1],[262,2],[0,1],[349,1],[330,1],[294,1],[262,1],[294,1],[330,1],[349,2]],
+    battle:[[523,0.5],[494,0.5],[440,0.5],[494,0.5],[523,1],[440,0.5],[392,0.5],[440,1],[523,0.5],[587,0.5],[523,1],[494,0.5],[440,0.5],[392,1]]
+  };
+  const m=melodies[type];
+  if(!m)return;
+  const tempo=type==='battle'?160:120;
+  let totalDur=0;
+  m.forEach(n=>totalDur+=n[1]*(60/tempo));
+  playMelody(m,tempo);
+  bgmInterval=setInterval(()=>playMelody(m,tempo),totalDur*1000+200);
+}
+function stopBGM(){if(bgmInterval){clearInterval(bgmInterval);bgmInterval=null;}}
+
+// === INPUT ===
+const KEYS={};
+let keyJustPressed={};
+let _pendingKeys={};
+document.addEventListener('keydown',e=>{
+  KEYS[e.key]=true;
+  _pendingKeys[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+  if(!audioCtx)initAudio();
+});
+document.addEventListener('keyup',e=>{KEYS[e.key]=false;});
+
+// Touch controls
+document.querySelectorAll('#touch button').forEach(btn=>{
+  const k=btn.dataset.key;
+  btn.addEventListener('touchstart',e=>{e.preventDefault();KEYS[k]=true;_pendingKeys[k]=true;if(!audioCtx)initAudio();});
+  btn.addEventListener('touchend',e=>{e.preventDefault();KEYS[k]=false;});
+  btn.addEventListener('mousedown',e=>{KEYS[k]=true;_pendingKeys[k]=true;if(!audioCtx)initAudio();});
+  btn.addEventListener('mouseup',e=>{KEYS[k]=false;});
+});
+
+function justPressed(k){return keyJustPressed[k];}
+
+// === DRAWING HELPERS ===
+function drawText(text,x,y,color,size){
+  CTX.fillStyle=color||'#e8e8e0';
+  CTX.font=(size||8)+'px monospace';
+  CTX.fillText(text,x,y);
+}
+
+function drawBox(x,y,w,h,bg,border){
+  CTX.fillStyle=bg||'#081820';
+  CTX.fillRect(x,y,w,h);
+  CTX.strokeStyle=border||'#e8e8e0';
+  CTX.lineWidth=2;
+  CTX.strokeRect(x+1,y+1,w-2,h-2);
+}
+
+function drawHP(x,y,w,cur,max,label){
+  drawText(label||'HP',x,y-2,'#e8e8e0',8);
+  CTX.fillStyle='#404040';
+  CTX.fillRect(x+20,y-8,w,6);
+  const pct=Math.max(0,cur/max);
+  CTX.fillStyle=pct>0.5?'#2a8a2a':pct>0.25?'#d0a020':'#c04040';
+  CTX.fillRect(x+20,y-8,w*pct,6);
+  drawText(cur+'/'+max,x+20,y+4,'#e8e8e0',7);
+}
+
+function drawMoral(x,y,w,val){
+  drawText('MR',x,y-2,'#6abadc',8);
+  CTX.fillStyle='#404040';
+  CTX.fillRect(x+20,y-8,w,4);
+  CTX.fillStyle='#6abadc';
+  CTX.fillRect(x+20,y-8,w*(val/100),4);
+}
+
+// === TITLE SCREEN ===
+function drawTitle(){
+  CTX.fillStyle='#081820';
+  CTX.fillRect(0,0,W,H);
+
+  // Lion logo pixel art
+  const cx=W/2,cy=90;
+  const t=GS.titleTimer;
+
+  // Shield
+  CTX.fillStyle='#1a3a5c';
+  CTX.beginPath();
+  CTX.moveTo(cx-40,50);CTX.lineTo(cx+40,50);
+  CTX.lineTo(cx+35,130);CTX.lineTo(cx,145);CTX.lineTo(cx-35,130);
+  CTX.closePath();CTX.fill();
+
+  CTX.fillStyle='#2a6aac';
+  CTX.beginPath();
+  CTX.moveTo(cx-35,55);CTX.lineTo(cx+35,55);
+  CTX.lineTo(cx+30,125);CTX.lineTo(cx,138);CTX.lineTo(cx-30,125);
+  CTX.closePath();CTX.fill();
+
+  // Lion on shield
+  CTX.fillStyle='#d0a020';
+  // body
+  CTX.fillRect(cx-12,85,24,25);
+  // head
+  CTX.fillRect(cx-10,70,20,18);
+  // mane
+  CTX.fillStyle='#8a5a0a';
+  CTX.fillRect(cx-14,65,28,12);
+  CTX.fillRect(cx-16,70,32,8);
+  // face
+  CTX.fillStyle='#d0a020';
+  CTX.fillRect(cx-8,73,16,12);
+  // eyes
+  CTX.fillStyle='#e8e8e0';
+  CTX.fillRect(cx-6,77,3,3);CTX.fillRect(cx+3,77,3,3);
+  CTX.fillStyle='#081820';
+  CTX.fillRect(cx-5,78,2,2);CTX.fillRect(cx+4,78,2,2);
+  // crown
+  CTX.fillStyle='#e8d840';
+  CTX.fillRect(cx-8,65,16,4);
+  CTX.fillRect(cx-6,62,3,3);CTX.fillRect(cx-1,61,3,3);CTX.fillRect(cx+4,62,3,3);
+  // legs
+  CTX.fillStyle='#d0a020';
+  CTX.fillRect(cx-10,108,6,12);CTX.fillRect(cx+4,108,6,12);
+  // tail
+  CTX.fillRect(cx+10,88,8,3);CTX.fillRect(cx+16,85,4,6);
+
+  // Title text
+  const flash=Math.sin(t*0.05)>0;
+  CTX.fillStyle='#e8d840';
+  CTX.font='bold 20px monospace';
+  CTX.textAlign='center';
+  CTX.fillText('TSV 1860 MÜNCHEN',cx,170);
+  CTX.fillStyle='#e8e8e0';
+  CTX.font='12px monospace';
+  CTX.fillText('ZEITREISE RPG',cx,188);
+
+  // Menu
+  const opts=['Neues Spiel','Fortsetzen'];
+  opts.forEach((o,i)=>{
+    CTX.fillStyle=i===GS.titleSel?(flash?'#e8d840':'#d0a020'):'#808080';
+    CTX.font='11px monospace';
+    CTX.fillText(o,cx,220+i*20);
+  });
+
+  // 1860 text at bottom
+  CTX.fillStyle='#2a6aac';
+  CTX.font='8px monospace';
+  CTX.fillText('EINMAL LÖWE, IMMER LÖWE',cx,275);
+  CTX.textAlign='left';
+
+  GS.titleTimer++;
+}
+
+function updateTitle(){
+  if(justPressed('ArrowUp')){GS.titleSel=(GS.titleSel+1)%2;playSFX('select');}
+  if(justPressed('ArrowDown')){GS.titleSel=(GS.titleSel+1)%2;playSFX('select');}
+  if(justPressed(' ')||justPressed('Enter')){
+    playSFX('confirm');
+    if(GS.titleSel===0){
+      // New game
+      newGame();
+    } else {
+      // Load
+      if(!loadGame()){
+        newGame();
+      }
+    }
+    startBGM('overworld');
+  }
+}
+
+function newGame(){
+  GS.map=0;GS.px=15;GS.py=10;GS.pdir=0;
+  GS.team=[];
+  GS.items=[{id:'weissbier',qty:5},{id:'rasen',qty:3},{id:'brezn',qty:1}];
+  GS.badges=[false,false,false,false];
+  GS.npcsDefeated={};
+  initMaps();
+  // Show intro dialog, then starter selection
+  GS.starterSel=0;
+  startDialog(
+    ['Willkommen, junger Sechzger-Fan!',
+     'Jemand versucht die Geschichte von TSV 1860 München auszulöschen!',
+     'Du musst durch die Zeit reisen und die 4 Arena-Meister besiegen!',
+     'Aber zuerst brauchst du einen Begleiter...'],
+    ()=>{GS.mode='starterSelect';GS.starterSel=0;}
+  );
+}
+
+const STARTERS=[
+  {id:'boxer',name:'Münchner Boxer',types:'ANGRIFF / HERZ',desc:'Schnell und stark. Schlägt sich durch jedes Hindernis!'},
+  {id:'starterturner',name:'Giesinger Turner',types:'DEFENSIV / TECHNIK',desc:'Stählerner Körper. Hält jedem Angriff stand!'},
+  {id:'stuermer',name:'Straßenkicker',types:'TAKTIK / ANGRIFF',desc:'Clever und treffsicher. Immer den richtigen Spielzug parat!'}
+];
+
+function drawStarterSelect(){
+  CTX.fillStyle='#081820';
+  CTX.fillRect(0,0,W,H);
+
+  // Title
+  CTX.textAlign='center';
+  CTX.fillStyle='#e8d840';
+  CTX.font='bold 13px monospace';
+  CTX.fillText('WÄHLE DEINEN BEGLEITER!',W/2,28);
+  CTX.textAlign='left';
+
+  // Draw 3 starter boxes
+  const boxW=90,boxH=180,gap=10;
+  const startX=(W-3*boxW-2*gap)/2;
+
+  STARTERS.forEach((s,i)=>{
+    const bx=startX+i*(boxW+gap);
+    const by=45;
+    const sel=i===GS.starterSel;
+
+    // Box background
+    CTX.fillStyle=sel?'#1a3a5c':'#0a1a2a';
+    CTX.fillRect(bx,by,boxW,boxH);
+    // Border
+    CTX.strokeStyle=sel?'#e8d840':'#2a5a8c';
+    CTX.lineWidth=sel?3:1;
+    CTX.strokeRect(bx,by,boxW,boxH);
+
+    // Sprite area
+    const sprCol=i===0?'#c04040':i===1?'#2a8a2a':'#2a6aac';
+    const sprColLt=i===0?'#e07070':i===1?'#5aba5a':'#6abadc';
+    // Draw a simple character icon
+    const cx=bx+boxW/2, cy=by+50;
+    // Head
+    CTX.fillStyle='#e0b080';
+    CTX.fillRect(cx-8,cy-20,16,16);
+    // Hair
+    CTX.fillStyle='#6a4a2a';
+    CTX.fillRect(cx-8,cy-22,16,6);
+    // Body
+    CTX.fillStyle=sprCol;
+    CTX.fillRect(cx-10,cy-4,20,24);
+    // Stripe detail
+    CTX.fillStyle=sprColLt;
+    CTX.fillRect(cx-6,cy,12,4);
+    // Arms
+    CTX.fillStyle=sprCol;
+    if(i===0){
+      // Boxer: fists up
+      CTX.fillRect(cx-16,cy-4,6,12);
+      CTX.fillRect(cx+10,cy-8,6,12);
+      CTX.fillStyle='#c04040';
+      CTX.fillRect(cx-16,cy-6,6,8); // glove
+      CTX.fillRect(cx+10,cy-10,6,8); // glove
+    } else if(i===1){
+      // Turner: arms wide
+      CTX.fillRect(cx-18,cy-2,8,6);
+      CTX.fillRect(cx+10,cy-2,8,6);
+    } else {
+      // Kicker: one arm, ball at foot
+      CTX.fillRect(cx-14,cy+2,4,10);
+      CTX.fillRect(cx+10,cy+2,4,10);
+      CTX.fillStyle='#e8e8e0';
+      CTX.beginPath();
+      CTX.arc(cx+4,cy+28,5,0,Math.PI*2);
+      CTX.fill();
+      CTX.fillStyle='#1a1a1a';
+      CTX.fillRect(cx+2,cy+26,2,2);
+      CTX.fillRect(cx+5,cy+28,2,2);
+    }
+    // Legs
+    CTX.fillStyle='#1a3a5c';
+    CTX.fillRect(cx-6,cy+20,5,12);
+    CTX.fillRect(cx+1,cy+20,5,12);
+    // Shoes
+    CTX.fillStyle='#1a1a1a';
+    CTX.fillRect(cx-7,cy+32,6,4);
+    CTX.fillRect(cx+1,cy+32,6,4);
+
+    // Name
+    CTX.textAlign='center';
+    CTX.fillStyle=sel?'#e8d840':'#e8e8e0';
+    CTX.font='bold 9px monospace';
+    CTX.fillText(s.name,bx+boxW/2,by+boxH-50);
+
+    // Types
+    CTX.fillStyle=sel?'#d0a020':'#808080';
+    CTX.font='8px monospace';
+    CTX.fillText(s.types,bx+boxW/2,by+boxH-38);
+
+    // Description (word wrap)
+    CTX.fillStyle=sel?'#e8e8e0':'#808080';
+    CTX.font='7px monospace';
+    const words=s.desc.split(' ');
+    let line='',ly=by+boxH-24;
+    words.forEach(w=>{
+      const test=line+w+' ';
+      if(CTX.measureText(test).width>boxW-8){
+        CTX.fillText(line.trim(),bx+boxW/2,ly);
+        line=w+' ';ly+=10;
+      } else line=test;
+    });
+    if(line.trim())CTX.fillText(line.trim(),bx+boxW/2,ly);
+
+    CTX.textAlign='left';
+  });
+
+  // Instructions
+  const flash=Math.sin(GS.frameCount*0.1)>0;
+  CTX.textAlign='center';
+  CTX.fillStyle=flash?'#e8d840':'#d0a020';
+  CTX.font='9px monospace';
+  CTX.fillText('← → Wählen    SPACE Bestätigen',W/2,H-12);
+  CTX.textAlign='left';
+}
+
+function updateStarterSelect(){
+  if(justPressed('ArrowLeft')){GS.starterSel=(GS.starterSel+2)%3;playSFX('select');}
+  if(justPressed('ArrowRight')){GS.starterSel=(GS.starterSel+1)%3;playSFX('select');}
+  if(justPressed(' ')||justPressed('Enter')){
+    playSFX('confirm');
+    const chosen=STARTERS[GS.starterSel];
+    GS.team=[makePlayerInstance(chosen.id,5)];
+    startDialog(
+      [chosen.name+' schließt sich dir an!',
+       'Typ: '+chosen.types,
+       'Viel Glück auf deiner Reise!',
+       'Tipp: Im hohen Gras triffst du wilde Sportler. Besiege sie!',
+       'Drücke M für das Menü.'],
+      ()=>{GS.mode='overworld';}
+    );
+  }
+}
+
+// === OVERWORLD ===
+function drawOverworld(){
+  const map=MAPS[GS.map];
+  if(!map)return;
+
+  // Camera offset (center on player)
+  const camX=Math.max(0,Math.min(GS.px*TW-W/2+TW/2,MW*TW-W));
+  const camY=Math.max(0,Math.min(GS.py*TH-H/2+TH/2,MH*TH-H));
+
+  const startTX=Math.floor(camX/TW);
+  const startTY=Math.floor(camY/TH);
+  const endTX=Math.min(MW-1,startTX+Math.ceil(W/TW)+1);
+  const endTY=Math.min(MH-1,startTY+Math.ceil(H/TH)+1);
+
+  const isSepia=GS.map===1;
+
+  CTX.fillStyle=isSepia?'#5a4a2a':'#1a5a1a';
+  CTX.fillRect(0,0,W,H);
+
+  // Draw tiles
+  for(let ty=startTY;ty<=endTY;ty++){
+    for(let tx=startTX;tx<=endTX;tx++){
+      const tile=map.tiles[ty]?map.tiles[ty][tx]:0;
+      const sx=tx*TW-camX,sy=ty*TH-camY;
+      let tc=null;
+      if(tile===0)tc=isSepia?TILE_CACHE.grass_s:TILE_CACHE.grass;
+      else if(tile===1)tc=isSepia?TILE_CACHE.tallgrass_s:TILE_CACHE.tallgrass;
+      else if(tile===2)tc=isSepia?TILE_CACHE.path_s:TILE_CACHE.path;
+      else if(tile===3)tc=isSepia?TILE_CACHE.tree_s:TILE_CACHE.tree;
+      else if(tile===4)tc=isSepia?TILE_CACHE.building_s:TILE_CACHE.building;
+      else if(tile===5)tc=TILE_CACHE.water;
+      else if(tile===6)tc=TILE_CACHE.portal;
+      else if(tile===7)tc=isSepia?TILE_CACHE.arena_s:TILE_CACHE.arena;
+      else if(tile===8)tc=TILE_CACHE.sign;
+      if(tc)CTX.drawImage(tc,sx,sy);
+    }
+  }
+
+  // Draw NPCs
+  map.npcs.forEach(npc=>{
+    if(npc.battle&&GS.npcsDefeated[npc.defKey])return;
+    const nx=npc.x*TW-camX,ny=npc.y*TH-camY;
+    if(nx>-TW&&nx<W+TW&&ny>-TH&&ny<H+TH){
+      CTX.drawImage(npc.sprite,nx,ny);
+    }
+  });
+
+  // Draw player
+  const dirs=['down','up','left','right'];
+  const frame=PLAYER_FRAMES[dirs[GS.pdir]+'_'+GS.pwalk];
+  if(frame){
+    const px=GS.px*TW-camX,py=GS.py*TH-camY;
+    CTX.drawImage(frame,px,py);
+  }
+
+  // Map name overlay
+  const mapNames=['Giesing','Alter Bot. Garten 1848','Grünwalder 1966','Olympia 1994','Grünwalder Neu 2024'];
+  drawBox(2,2,140,16,'rgba(8,24,32,0.8)');
+  drawText(mapNames[GS.map]||'???',6,14,'#e8d840',9);
+
+  // Badge count
+  const bc=GS.badges.filter(b=>b).length;
+  drawBox(W-80,2,78,16,'rgba(8,24,32,0.8)');
+  drawText('Abz: '+bc+'/4',W-76,14,'#e8e8e0',9);
+}
+
+function updateOverworld(){
+  if(GS.moveTimer>0){GS.moveTimer--;return;}
+
+  let dx=0,dy=0;
+  if(KEYS['ArrowUp']){dy=-1;GS.pdir=1;}
+  else if(KEYS['ArrowDown']){dy=1;GS.pdir=0;}
+  else if(KEYS['ArrowLeft']){dx=-1;GS.pdir=2;}
+  else if(KEYS['ArrowRight']){dx=1;GS.pdir=3;}
+
+  if(dx!==0||dy!==0){
+    const nx=GS.px+dx,ny=GS.py+dy;
+    const map=MAPS[GS.map];
+    if(nx>=0&&nx<MW&&ny>=0&&ny<MH){
+      const tile=map.tiles[ny][nx];
+
+      // Check NPC collision
+      let npcHit=null;
+      map.npcs.forEach(npc=>{
+        if(npc.x===nx&&npc.y===ny){
+          if(!npc.battle||!GS.npcsDefeated[npc.defKey])npcHit=npc;
+        }
+      });
+
+      if(npcHit){
+        // Face NPC
+        GS.moveTimer=8;
+      } else if(!BLOCKED.has(tile)){
+        GS.px=nx;GS.py=ny;
+        GS.pwalk=(GS.pwalk+1)%2;
+        GS.moveTimer=6;
+
+        // Check portal
+        map.portals.forEach(p=>{
+          if(p.x===nx&&p.y===ny){
+            startTransition('portal',{map:p.toMap,x:p.toX,y:p.toY});
+          }
         });
-        
-        document.addEventListener('keyup', (e) => {
-            keys[e.code] = false;
-            e.preventDefault();
-        });
-        
-        // Touch controls
-        document.querySelectorAll('.dpad-btn, .action-btn').forEach(btn => {
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const key = btn.dataset.key;
-                keys[key] = true;
-                keysPressed[key] = true;
-                btn.style.background = 'rgba(200, 168, 50, 0.7)';
-            });
-            
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                const key = btn.dataset.key;
-                keys[key] = false;
-                btn.style.background = 'rgba(0, 82, 156, 0.7)';
-            });
-        });
-        
-        // Sound system
-        let audioContext;
-        let masterVolume = 0.3;
-        
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-        
-        function playTone(frequency, duration, volume = 0.1, type = 'square') {
-            initAudio();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-            
-            gainNode.gain.setValueAtTime(volume * masterVolume, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration);
-        }
-        
-        function playMenuSound() {
-            playTone(523, 0.1, 0.1);
-        }
-        
-        function playSelectSound() {
-            playTone(659, 0.15, 0.1);
-        }
-        
-        function playBattleStartJingle() {
-            setTimeout(() => playTone(523, 0.1, 0.2), 0);
-            setTimeout(() => playTone(659, 0.1, 0.2), 100);
-            setTimeout(() => playTone(784, 0.1, 0.2), 200);
-            setTimeout(() => playTone(1047, 0.3, 0.2), 300);
-        }
-        
-        function playVictoryJingle() {
-            setTimeout(() => playTone(523, 0.15, 0.2), 0);
-            setTimeout(() => playTone(659, 0.15, 0.2), 150);
-            setTimeout(() => playTone(784, 0.15, 0.2), 300);
-            setTimeout(() => playTone(1047, 0.25, 0.2), 450);
-            setTimeout(() => playTone(1319, 0.4, 0.2), 650);
-        }
-        
-        // Player definitions
-        const PLAYERS = {
-            radi: {
-                name: 'Radi Radenković',
-                type: [TYPES.HERZ, TYPES.DEFENSIV],
-                hp: 120,
-                maxHp: 120,
-                moral: 100,
-                maxMoral: 100,
-                level: 50,
-                moves: [
-                    { name: 'Bin i Radi', type: TYPES.HERZ, power: 0, description: 'Heilt Team-Moral +30%', effect: 'healTeamMoral' },
-                    { name: 'Radis Ausflug', type: TYPES.ANGRIFF, power: 70, description: '50% Chance großer Schaden, 50% Selbstschaden', effect: 'risky' },
-                    { name: 'Schlagerstar', type: TYPES.HERZ, power: 0, description: 'Verwirrt Gegner 2 Runden', effect: 'confuse' },
-                    { name: 'Paradereflex', type: TYPES.DEFENSIV, power: 0, description: 'Blockt nächsten Angriff 100%', effect: 'block' }
-                ],
-                sprite: 'goalkeeper'
-            },
-            brunnenmeier: {
-                name: 'Rudi Brunnenmeier',
-                type: [TYPES.ANGRIFF, TYPES.TECHNIK],
-                hp: 100,
-                maxHp: 100,
-                moral: 80,
-                maxMoral: 80,
-                level: 48,
-                moves: [
-                    { name: 'Blonder Engel', type: TYPES.ANGRIFF, power: 80, description: 'Starker Angriff', effect: 'none' },
-                    { name: 'Dribbelkönig', type: TYPES.TECHNIK, power: 0, description: 'Nächster Angriff trifft garantiert', effect: 'guarantee' },
-                    { name: '155 Tore', type: TYPES.ANGRIFF, power: 60, description: 'Kraft wächst mit Siegen', effect: 'growing' },
-                    { name: 'Tragik', type: TYPES.HERZ, power: 0, description: 'Schwächer bei niedriger Moral', effect: 'tragic' }
-                ],
-                sprite: 'striker'
-            },
-            grosser: {
-                name: 'Peter Grosser',
-                type: [TYPES.TAKTIK, TYPES.HERZ],
-                hp: 110,
-                maxHp: 110,
-                moral: 90,
-                maxMoral: 90,
-                level: 49,
-                moves: [
-                    { name: 'Kapitänsruf', type: TYPES.HERZ, power: 0, description: 'Stärkt Team-Moral +20%', effect: 'boostTeam' },
-                    { name: 'Spielaufbau', type: TYPES.TAKTIK, power: 45, description: 'Schwächt Gegner-Verteidigung 2 Runden', effect: 'weaken' },
-                    { name: 'Grätschen', type: TYPES.DEFENSIV, power: 55, description: 'Mittlerer Schaden + reduziert Geschwindigkeit', effect: 'slow' },
-                    { name: 'Anführer', type: TYPES.HERZ, power: 0, description: 'Team bekommt +10% Moral in allen Kämpfen', effect: 'passive' }
-                ],
-                sprite: 'midfielder'
-            },
-            turner1: {
-                name: 'Heinrich Turner',
-                type: [TYPES.TAKTIK],
-                hp: 80,
-                maxHp: 80,
-                moral: 70,
-                maxMoral: 70,
-                level: 25,
-                moves: [
-                    { name: 'Barrengriff', type: TYPES.TAKTIK, power: 40, description: 'Solider Angriff', effect: 'none' },
-                    { name: 'Turnvater-Weisheit', type: TYPES.HERZ, power: 0, description: 'Heilt eigene HP', effect: 'heal' },
-                    { name: 'Vereinsgeist', type: TYPES.HERZ, power: 0, description: 'Stärkt Moral', effect: 'moralBoost' },
-                    { name: 'Traditionsbewusstsein', type: TYPES.TAKTIK, power: 35, description: 'Ehrt die Geschichte', effect: 'none' }
-                ],
-                sprite: 'turner'
-            }
-        };
-        
-        // Battle system
-        let battleState = {
-            playerTeam: [],
-            enemyTeam: [],
-            currentPlayer: 0,
-            currentEnemy: 0,
-            turn: 'player',
-            selectedMove: -1,
-            battleText: '',
-            animTimer: 0,
-            effects: {
-                player: {},
-                enemy: {}
-            }
-        };
-        
-        // Maps
-        const MAPS = {
-            giesing: {
-                width: 20,
-                height: 15,
-                tiles: [
-                    // Simplified tile map - 0=grass, 1=path, 2=building, 3=tree, 4=npc, 5=arena
-                    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
-                    2,1,0,0,3,3,0,0,1,1,1,0,0,3,3,0,0,1,1,2,
-                    2,1,0,4,0,0,0,0,1,1,1,0,0,0,0,4,0,1,1,2,
-                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
-                    2,1,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,1,2,
-                    2,1,0,3,3,3,0,0,1,1,1,0,0,3,3,3,0,0,1,2,
-                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
-                    2,1,0,0,0,4,0,0,1,1,1,0,0,4,0,0,0,0,1,2,
-                    2,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,2,
-                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
-                    2,1,0,3,0,0,0,0,1,1,1,0,0,0,0,3,0,0,1,2,
-                    2,1,0,0,0,0,3,0,1,1,1,0,3,0,0,0,0,0,1,2,
-                    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,
-                    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
-                ],
-                npcs: [
-                    { x: 3*16+8, y: 3*16+8, text: "Willkommen in Giesing! Hier begann alles 1860. Die Löwen sind hier zu Hause!" },
-                    { x: 15*16+8, y: 3*16+8, text: "Das Grünwalder Stadion ist unser heiliger Boden. Dort warten große Herausforderungen!" },
-                    { x: 5*16+8, y: 8*16+8, text: "Sammle starke Spieler für dein Team! Ohne eine gute Mannschaft kommst du nicht weit." },
-                    { x: 13*16+8, y: 8*16+8, text: "Die erste Arena ist im Alten Botanischen Garten. Der Turnvater wartet dort auf dich!" }
-                ],
-                arenas: [
-                    { x: 9*16+8, y: 5*16+8, name: 'Arena 1: Die Gründung', id: 'gruendung' }
-                ]
-            }
-        };
-        
-        // Arena definitions
-        const ARENAS = {
-            gruendung: {
-                name: 'Die Gründung',
-                leader: 'Turnvater',
-                badge: 'Gründerlöwe',
-                description: 'Hier begann alles - im Alten Botanischen Garten kämpfst du gegen die Turner der ersten Stunde.',
-                enemies: [
-                    { ...PLAYERS.turner1, name: 'Heinrich Turner' },
-                    { ...PLAYERS.turner1, name: 'Wilhelm Gymast', moves: PLAYERS.turner1.moves },
-                    { ...PLAYERS.turner1, name: 'Franz Turnmeister', moves: PLAYERS.turner1.moves }
-                ],
-                reward: { player: 'turner1', badge: 'gruenderloewe' }
-            }
-        };
-        
-        // Rendering functions
-        function drawPixelRect(x, y, width, height, color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(Math.floor(x), Math.floor(y), width, height);
-        }
-        
-        function drawPixelSprite(x, y, width, height, colors) {
-            for (let py = 0; py < height; py++) {
-                for (let px = 0; px < width; px++) {
-                    const colorIndex = colors[py * width + px];
-                    if (colorIndex > 0) {
-                        const color = Object.values(COLORS)[colorIndex - 1];
-                        drawPixelRect(x + px, y + py, 1, 1, color);
-                    }
-                }
-            }
-        }
-        
-        function drawPlayer(x, y, direction = 'down', frame = 0) {
-            const size = 16;
-            // Simple 16x16 player sprite
-            const playerSprite = [
-                0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
-                0,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,
-                0,2,2,3,3,2,2,2,2,3,3,2,2,0,0,0,
-                0,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,
-                0,0,2,2,2,1,1,1,1,2,2,2,0,0,0,0,
-                0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,
-                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
-                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
-                0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
-                0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,
-                0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,
-                0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,
-                0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,
-                0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,
-                0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,
-                0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0
-            ];
-            
-            if (frame === 1 && direction === 'down') {
-                // Alternate walking frame - just shift legs slightly
-                for (let i = 11 * 16; i < 16 * 16; i++) {
-                    const px = i % 16;
-                    const py = Math.floor(i / 16);
-                    if (px < 8 && playerSprite[i] === 1) {
-                        playerSprite[i + 1] = 1;
-                        playerSprite[i] = 0;
-                    }
-                }
-            }
-            
-            drawPixelSprite(x - 8, y - 8, 16, 16, playerSprite);
-        }
-        
-        function drawNPC(x, y, type = 'citizen') {
-            const npcSprite = [
-                0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
-                0,2,4,4,4,4,4,4,4,4,4,4,2,0,0,0,
-                0,2,4,3,3,4,4,4,4,3,3,4,2,0,0,0,
-                0,2,4,4,4,4,4,4,4,4,4,4,2,0,0,0,
-                0,0,2,2,2,1,1,1,1,2,2,2,0,0,0,0,
-                0,0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,
-                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
-                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
-                0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,0,
-                0,0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,
-                0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,0,
-                0,0,0,0,5,5,0,0,5,5,0,0,0,0,0,0,
-                0,0,0,0,5,5,0,0,5,5,0,0,0,0,0,0,
-                0,0,0,5,5,5,0,0,5,5,5,0,0,0,0,0,
-                0,0,5,5,5,0,0,0,0,5,5,5,0,0,0,0,
-                0,5,5,5,0,0,0,0,0,0,5,5,5,0,0,0
-            ];
-            
-            drawPixelSprite(x - 8, y - 8, 16, 16, npcSprite);
-        }
-        
-        function drawTile(x, y, tileType) {
-            const tileX = x * TILE_SIZE;
-            const tileY = y * TILE_SIZE;
-            
-            switch(tileType) {
-                case 0: // Grass
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
-                    // Add some grass texture
-                    for (let i = 0; i < 8; i++) {
-                        const px = Math.floor(Math.random() * TILE_SIZE);
-                        const py = Math.floor(Math.random() * TILE_SIZE);
-                        drawPixelRect(tileX + px, tileY + py, 1, 1, '#1F5F2F');
-                    }
-                    break;
-                case 1: // Path
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.WHITE);
-                    drawPixelRect(tileX + 1, tileY + 1, TILE_SIZE - 2, TILE_SIZE - 2, '#D0D0C0');
-                    break;
-                case 2: // Building
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.BROWN);
-                    drawPixelRect(tileX + 2, tileY + 2, TILE_SIZE - 4, TILE_SIZE - 4, '#A0522D');
-                    break;
-                case 3: // Tree
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
-                    drawPixelRect(tileX + 6, tileY + 10, 4, 6, COLORS.BROWN);
-                    drawPixelRect(tileX + 2, tileY + 2, 12, 10, COLORS.GREEN);
-                    break;
-                case 4: // NPC placeholder
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.GRASS);
-                    break;
-                case 5: // Arena
-                    drawPixelRect(tileX, tileY, TILE_SIZE, TILE_SIZE, COLORS.BLUE);
-                    drawPixelRect(tileX + 2, tileY + 2, TILE_SIZE - 4, TILE_SIZE - 4, COLORS.GOLD);
-                    break;
-            }
-        }
-        
-        function drawMap() {
-            const currentMapData = MAPS[currentMap];
-            const startX = Math.floor(camera.x / TILE_SIZE);
-            const startY = Math.floor(camera.y / TILE_SIZE);
-            const tilesX = Math.ceil(CANVAS_WIDTH / TILE_SIZE) + 2;
-            const tilesY = Math.ceil(CANVAS_HEIGHT / TILE_SIZE) + 2;
-            
-            for (let ty = 0; ty < tilesY; ty++) {
-                for (let tx = 0; tx < tilesX; tx++) {
-                    const mapX = startX + tx;
-                    const mapY = startY + ty;
-                    
-                    if (mapX >= 0 && mapX < currentMapData.width && mapY >= 0 && mapY < currentMapData.height) {
-                        const tileType = currentMapData.tiles[mapY * currentMapData.width + mapX];
-                        drawTile(tx * TILE_SIZE - (camera.x % TILE_SIZE), ty * TILE_SIZE - (camera.y % TILE_SIZE), tileType);
-                    }
-                }
-            }
-            
-            // Draw NPCs
-            currentMapData.npcs.forEach(npc => {
-                const screenX = npc.x - camera.x;
-                const screenY = npc.y - camera.y;
-                if (screenX > -16 && screenX < CANVAS_WIDTH + 16 && screenY > -16 && screenY < CANVAS_HEIGHT + 16) {
-                    drawNPC(screenX, screenY);
-                }
-            });
-            
-            // Draw arenas
-            currentMapData.arenas.forEach(arena => {
-                const screenX = arena.x - camera.x;
-                const screenY = arena.y - camera.y;
-                if (screenX > -16 && screenX < CANVAS_WIDTH + 16 && screenY > -16 && screenY < CANVAS_HEIGHT + 16) {
-                    // Arena building sprite
-                    drawPixelRect(screenX - 16, screenY - 16, 32, 32, COLORS.BLUE);
-                    drawPixelRect(screenX - 12, screenY - 12, 24, 24, COLORS.GOLD);
-                    drawPixelRect(screenX - 8, screenY - 8, 16, 16, COLORS.WHITE);
-                }
-            });
-        }
-        
-        function drawText(text, x, y, size = 10, color = COLORS.WHITE, maxWidth = null) {
-            ctx.fillStyle = color;
-            ctx.font = `${size}px monospace`;
-            
-            if (maxWidth) {
-                const words = text.split(' ');
-                let line = '';
-                let lineY = y;
-                
-                words.forEach(word => {
-                    const testLine = line + word + ' ';
-                    const metrics = ctx.measureText(testLine);
-                    
-                    if (metrics.width > maxWidth && line !== '') {
-                        ctx.fillText(line.trim(), x, lineY);
-                        line = word + ' ';
-                        lineY += size + 2;
-                    } else {
-                        line = testLine;
-                    }
-                });
-                
-                if (line.trim() !== '') {
-                    ctx.fillText(line.trim(), x, lineY);
-                }
+
+        // Check arena
+        if(tile===7){
+          const leaderIdx=GS.map-1;
+          if(leaderIdx>=0&&leaderIdx<4){
+            if(GS.badges[leaderIdx]){
+              startDialog(['Du hast diese Arena bereits','besiegt! Weiter so!'],null);
             } else {
-                ctx.fillText(text, x, y);
+              const leader=ARENA_LEADERS[leaderIdx];
+              // Reset leader team HP
+              leader.team.forEach(p=>{p.hp=p.maxHp;p.moral=80;p.atkBoost=0;p.defBoost=0;});
+              startDialog(leader.dialog,()=>{
+                startBattle(leader.team.map(p=>({...p,hp:p.maxHp,moral:80})),true,leaderIdx);
+              });
             }
+          }
         }
-        
-        function drawDialogBox(text) {
-            const boxHeight = 80;
-            const boxY = CANVAS_HEIGHT - boxHeight;
-            
-            // Dialog box background
-            drawPixelRect(10, boxY, CANVAS_WIDTH - 20, boxHeight - 10, COLORS.WHITE);
-            drawPixelRect(12, boxY + 2, CANVAS_WIDTH - 24, boxHeight - 14, COLORS.BACKGROUND);
-            
-            // Text
-            drawText(text, 20, boxY + 20, 10, COLORS.WHITE, CANVAS_WIDTH - 40);
+
+        // Wild encounter on tall grass
+        if(tile===1&&Math.random()<GS.wildChance){
+          const wildEra=GS.map===0?0:GS.map;
+          const wildPool=PLAYERS.filter(p=>p.era===wildEra||p.era===(GS.map===0?1:wildEra));
+          if(wildPool.length>0){
+            const pick=wildPool[Math.floor(Math.random()*wildPool.length)];
+            const lvl=Math.max(3,Math.floor(GS.team[0].level+(Math.random()*4-2)));
+            const wild=makePlayerInstance(pick.id,lvl);
+            playSFX('encounter');
+            startTransition('encounter',{enemy:[wild],isArena:false,arenaIdx:-1});
+          }
         }
-        
-        function drawBattleScreen() {
-            // Background
-            ctx.fillStyle = COLORS.GRASS;
-            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT * 0.6);
-            
-            ctx.fillStyle = COLORS.BACKGROUND;
-            ctx.fillRect(0, CANVAS_HEIGHT * 0.6, CANVAS_WIDTH, CANVAS_HEIGHT * 0.4);
-            
-            // Player and enemy sprites
-            if (battleState.playerTeam[battleState.currentPlayer]) {
-                drawBattleSprite(60, CANVAS_HEIGHT * 0.7, battleState.playerTeam[battleState.currentPlayer], false);
-                drawHealthBar(20, CANVAS_HEIGHT * 0.8, battleState.playerTeam[battleState.currentPlayer], true);
-            }
-            
-            if (battleState.enemyTeam[battleState.currentEnemy]) {
-                drawBattleSprite(CANVAS_WIDTH - 60, CANVAS_HEIGHT * 0.3, battleState.enemyTeam[battleState.currentEnemy], true);
-                drawHealthBar(CANVAS_WIDTH - 120, CANVAS_HEIGHT * 0.1, battleState.enemyTeam[battleState.currentEnemy], false);
-            }
-            
-            // Battle UI
-            if (battleState.turn === 'player' && battleState.selectedMove === -1) {
-                drawMoveSelection();
-            }
-            
-            if (battleState.battleText) {
-                drawDialogBox(battleState.battleText);
-            }
+      }
+    }
+  }
+
+  // Interact (Space)
+  if(justPressed(' ')||justPressed('Enter')){
+    const map=MAPS[GS.map];
+    const faceDirs=[[0,1],[0,-1],[-1,0],[1,0]];
+    const fx=GS.px+faceDirs[GS.pdir][0],fy=GS.py+faceDirs[GS.pdir][1];
+
+    // Check NPC
+    map.npcs.forEach(npc=>{
+      if(npc.x===fx&&npc.y===fy){
+        if(npc.battle&&GS.npcsDefeated[npc.defKey]){
+          startDialog(['...','(Bereits besiegt)'],null);
+        } else if(npc.battle&&!npc.defeated){
+          startDialog(npc.dialog,()=>{
+            npc.team.forEach(p=>{p.hp=p.maxHp;p.moral=80;p.atkBoost=0;p.defBoost=0;});
+            startBattle(npc.team.map(p=>({...p})),false,-1,npc.defKey);
+          });
+        } else {
+          startDialog(npc.dialog,null);
         }
-        
-        function drawBattleSprite(x, y, player, isEnemy) {
-            const size = 48;
-            // Simple battle sprite - larger version of overworld sprite
-            const colors = [
-                0,0,0,0,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,2,2,2,2,2,2,2,2,
-                0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,2,2,2,2,2,2,2,2,2
-                // ... simplified for brevity, would be full 48x48 sprite
-            ];
-            
-            // Color based on player type
-            const primaryColor = player.type.includes(TYPES.HERZ) ? COLORS.GOLD : 
-                               player.type.includes(TYPES.ANGRIFF) ? COLORS.RED :
-                               player.type.includes(TYPES.DEFENSIV) ? COLORS.BLUE :
-                               player.type.includes(TYPES.TECHNIK) ? COLORS.GREEN : COLORS.GRAY;
-            
-            drawPixelRect(x - 24, y - 24, 48, 48, primaryColor);
-            drawPixelRect(x - 20, y - 20, 40, 40, COLORS.WHITE);
-            
-            // Name
-            drawText(player.name, x - 40, y - 40, 8, COLORS.WHITE);
+      }
+    });
+
+    // Check sign
+    const tile=map.tiles[fy]&&map.tiles[fy][fx];
+    if(tile===8){
+      const signTexts={
+        0:{'3_6':'Portal nach 1848','27_6':'Portal nach 1966','3_16':'Portal nach 1994','27_16':'Portal nach 2024'},
+        1:{'15_18':'Zurück nach Giesing'},
+        2:{'15_18':'Zurück nach Giesing'},
+        3:{'15_18':'Zurück nach Giesing'},
+        4:{'15_18':'Zurück nach Giesing'}
+      };
+      const key=fx+'_'+fy;
+      const txt=(signTexts[GS.map]&&signTexts[GS.map][key])||'Ein Schild.';
+      startDialog([txt],null);
+    }
+  }
+
+  // Menu
+  if(justPressed('m')||justPressed('Escape')){
+    GS.mode='menu';GS.menuIdx=0;GS.menuSub=0;
+    playSFX('select');
+  }
+}
+
+// === TRANSITIONS ===
+function startTransition(type,data){
+  GS.mode='transition';
+  GS.transType=type;
+  GS.transTo=data;
+  GS.transTimer=0;
+}
+
+function updateTransition(){
+  GS.transTimer++;
+  if(GS.transType==='portal'||GS.transType==='encounter'){
+    if(GS.transTimer>=30){
+      if(GS.transType==='portal'){
+        GS.map=GS.transTo.map;
+        GS.px=GS.transTo.x;
+        GS.py=GS.transTo.y;
+        GS.mode='overworld';
+        // Reinit NPCs defeated state
+      } else {
+        startBattle(GS.transTo.enemy,GS.transTo.isArena,GS.transTo.arenaIdx);
+      }
+    }
+  }
+}
+
+function drawTransition(){
+  // Draw underlying overworld
+  drawOverworld();
+  // Overlay effect
+  const p=GS.transTimer/30;
+  if(GS.transType==='portal'){
+    CTX.fillStyle='rgba(128,64,224,'+Math.min(1,p*2)+')';
+    CTX.fillRect(0,0,W,H);
+  } else if(GS.transType==='encounter'){
+    // Horizontal stripe wipe
+    const stripes=8;
+    const sh=H/stripes;
+    for(let i=0;i<stripes;i++){
+      const progress=Math.min(1,p*2-i*0.08);
+      if(progress>0){
+        CTX.fillStyle='#081820';
+        if(i%2===0)CTX.fillRect(0,i*sh,W*progress,sh);
+        else CTX.fillRect(W*(1-progress),i*sh,W*progress,sh);
+      }
+    }
+  }
+}
+
+// === DIALOG ===
+function startDialog(lines,cb){
+  GS._prevMode=GS.mode;
+  GS.mode='dialog';
+  GS.dialogLines=lines;
+  GS.dialogIdx=0;
+  GS.dialogChar=0;
+  GS.dialogTimer=0;
+  GS.dialogCb=cb;
+}
+
+function drawDialog(){
+  // Draw background (overworld or battle or starter)
+  if(GS.battleState)drawBattleField();
+  else if(GS._prevMode==='starterSelect')drawStarterSelect();
+  else drawOverworld();
+
+  // Dialog box - bigger for 2 lines
+  drawBox(8,H-76,W-16,68,'rgba(8,24,32,0.95)','#e8e8e0');
+
+  const line=GS.dialogLines[GS.dialogIdx]||'';
+  const shown=line.substring(0,GS.dialogChar);
+  drawText(shown,16,H-58,'#e8e8e0',10);
+
+  // Show second line (next line) once current is fully typed
+  if(GS.dialogChar>=line.length && GS.dialogIdx+1<GS.dialogLines.length){
+    drawText(GS.dialogLines[GS.dialogIdx+1],16,H-42,'#e8e8e0',10);
+  }
+
+  // Indicator - show arrow when ready to advance
+  if(GS.dialogChar>=line.length){
+    const blink=Math.sin(GS.frameCount*0.15)>0;
+    if(blink)drawText('▼',W-28,H-16,'#e8d840',10);
+  }
+}
+
+function updateDialog(){
+  GS.dialogTimer++;
+  const line=GS.dialogLines[GS.dialogIdx]||'';
+  if(GS.dialogChar<line.length){
+    if(GS.dialogTimer%2===0)GS.dialogChar++;
+  }
+  if(justPressed(' ')||justPressed('Enter')){
+    if(GS.dialogChar<line.length){
+      // Fast-forward current line
+      GS.dialogChar=line.length;
+    } else {
+      // Advance by 2 (since we show 2 lines at once)
+      GS.dialogIdx+=2;
+      GS.dialogChar=0;
+      GS.dialogTimer=0;
+      if(GS.dialogIdx>=GS.dialogLines.length){
+        if(GS.dialogCb){
+          const cb=GS.dialogCb;
+          GS.dialogCb=null;
+          cb();
+        } else {
+          GS.mode=GS.battleState?'battle':(GS._prevMode||'overworld');
         }
-        
-        function drawHealthBar(x, y, player, showMoral = false) {
-            const barWidth = 100;
-            const barHeight = 6;
-            
-            // HP Bar
-            drawPixelRect(x, y, barWidth, barHeight, COLORS.DARK);
-            const hpPercent = player.hp / player.maxHp;
-            const hpColor = hpPercent > 0.5 ? COLORS.GREEN : hpPercent > 0.2 ? COLORS.GOLD : COLORS.RED;
-            drawPixelRect(x + 1, y + 1, (barWidth - 2) * hpPercent, barHeight - 2, hpColor);
-            
-            drawText(`HP: ${player.hp}/${player.maxHp}`, x, y - 10, 8, COLORS.WHITE);
-            
-            if (showMoral) {
-                // Moral Bar
-                const moralY = y + 15;
-                drawPixelRect(x, moralY, barWidth, barHeight, COLORS.DARK);
-                const moralPercent = player.moral / player.maxMoral;
-                const moralColor = moralPercent > 0.5 ? COLORS.BLUE : moralPercent > 0.2 ? COLORS.GOLD : COLORS.RED;
-                drawPixelRect(x + 1, moralY + 1, (barWidth - 2) * moralPercent, barHeight - 2, moralColor);
-                
-                drawText(`Moral: ${player.moral}/${player.maxMoral}`, x, moralY - 10, 8, COLORS.WHITE);
-            }
+      }
+    }
+  }
+}
+
+// === MENU ===
+function drawMenu(){
+  drawOverworld();
+  drawBox(20,10,W-40,H-20,'rgba(8,24,32,0.95)','#e8d840');
+
+  const menuItems=['Team','Items','Speichern','Schließen'];
+  CTX.fillStyle='#e8d840';CTX.font='bold 12px monospace';CTX.textAlign='center';
+  CTX.fillText('= MENÜ =',W/2,32);CTX.textAlign='left';
+
+  if(GS.menuSub===0){
+    menuItems.forEach((item,i)=>{
+      CTX.fillStyle=i===GS.menuIdx?'#e8d840':'#808080';
+      CTX.font='10px monospace';
+      CTX.fillText((i===GS.menuIdx?'▶ ':' ')+item,40,55+i*18);
+    });
+
+    // Badges display
+    drawText('Abzeichen:',40,140,'#6abadc',9);
+    const badgeNames=['1848','1966','1994','2024'];
+    badgeNames.forEach((b,i)=>{
+      CTX.fillStyle=GS.badges[i]?'#e8d840':'#404040';
+      CTX.fillRect(40+i*60,148,50,14);
+      drawText(b,48+i*60,160,GS.badges[i]?'#081820':'#808080',8);
+    });
+  }
+  else if(GS.menuSub===1){
+    // Team view
+    drawText('▶ Team',40,50,'#e8d840',10);
+    GS.team.forEach((p,i)=>{
+      const sel=i===GS.menuTeamIdx;
+      CTX.fillStyle=sel?'rgba(42,106,172,0.3)':'transparent';
+      CTX.fillRect(35,55+i*32,250,30);
+      drawText(p.name,40,68+i*32,sel?'#e8d840':'#e8e8e0',9);
+      drawText('Lv'+p.level+' '+p.types.join('/'),40,78+i*32,'#6abadc',7);
+      drawHP(160,74+i*32,80,p.hp,p.maxHp,'');
+    });
+    drawText('X/B=Zurück',40,H-40,'#808080',8);
+  }
+  else if(GS.menuSub===2){
+    // Items view
+    drawText('▶ Items',40,50,'#e8d840',10);
+    const items=GS.items.filter(it=>it.qty>0);
+    if(items.length===0){drawText('Keine Items!',40,70,'#808080',9);}
+    items.forEach((it,i)=>{
+      const sel=i===GS.menuTeamIdx;
+      const def=ITEMS[it.id];
+      drawText((sel?'▶ ':' ')+def.name+' x'+it.qty,40,70+i*20,sel?'#e8d840':'#e8e8e0',9);
+      if(sel)drawText(def.desc,40,83+i*20,'#6abadc',7);
+    });
+    drawText('SPACE=Benutzen X/B=Zurück',40,H-40,'#808080',8);
+  }
+}
+
+function updateMenu(){
+  if(GS.menuSub===0){
+    if(justPressed('ArrowUp')){GS.menuIdx=(GS.menuIdx-1+4)%4;playSFX('select');}
+    if(justPressed('ArrowDown')){GS.menuIdx=(GS.menuIdx+1)%4;playSFX('select');}
+    if(justPressed(' ')||justPressed('Enter')){
+      playSFX('confirm');
+      if(GS.menuIdx===0){GS.menuSub=1;GS.menuTeamIdx=0;}
+      else if(GS.menuIdx===1){GS.menuSub=2;GS.menuTeamIdx=0;}
+      else if(GS.menuIdx===2){saveGame();startDialog(['Spiel gespeichert!'],()=>{GS.mode='menu';});}
+      else{GS.mode='overworld';}
+    }
+    if(justPressed('x')||justPressed('Escape')||justPressed('m')){GS.mode='overworld';}
+  }
+  else if(GS.menuSub===1){
+    if(justPressed('ArrowUp')){GS.menuTeamIdx=Math.max(0,GS.menuTeamIdx-1);playSFX('select');}
+    if(justPressed('ArrowDown')){GS.menuTeamIdx=Math.min(GS.team.length-1,GS.menuTeamIdx+1);playSFX('select');}
+    if(justPressed('x')||justPressed('Escape')){GS.menuSub=0;}
+  }
+  else if(GS.menuSub===2){
+    const items=GS.items.filter(it=>it.qty>0);
+    if(justPressed('ArrowUp')){GS.menuTeamIdx=Math.max(0,GS.menuTeamIdx-1);playSFX('select');}
+    if(justPressed('ArrowDown')){GS.menuTeamIdx=Math.min(items.length-1,GS.menuTeamIdx+1);playSFX('select');}
+    if(justPressed(' ')&&items.length>0){
+      // Use item on first team member (simple)
+      const it=items[GS.menuTeamIdx];
+      if(it&&GS.team.length>0){
+        const target=GS.team[0];
+        ITEMS[it.id].effect(target);
+        it.qty--;
+        playSFX('confirm');
+        startDialog([ITEMS[it.id].name+' benutzt!',target.name+' wurde geheilt!'],()=>{GS.mode='menu';GS.menuSub=2;});
+      }
+    }
+    if(justPressed('x')||justPressed('Escape')){GS.menuSub=0;}
+  }
+}
+
+// === BATTLE SYSTEM ===
+function startBattle(enemyTeam,isArena,arenaIdx,npcKey){
+  stopBGM();
+  GS.mode='battle';
+  GS.battleState={
+    phase:'intro', // intro,select,enemySelect,animate,result,catch,xp,end
+    player:GS.team[0],
+    playerIdx:0,
+    enemy:enemyTeam[0],
+    enemyIdx:0,
+    enemyTeam:enemyTeam,
+    isArena:isArena,
+    arenaIdx:arenaIdx,
+    npcKey:npcKey||null,
+    moveIdx:0,
+    msg:'',
+    msgTimer:0,
+    animTimer:0,
+    animType:'',
+    shakeP:0,shakeE:0,
+    flashP:0,flashE:0,
+    introTimer:0,
+    resultTimer:0,
+    xpGain:0,
+    caught:false,
+    won:false,
+    phaseQueue:[]
+  };
+  setTimeout(()=>startBGM('battle'),500);
+}
+
+function drawBattleField(){
+  const bs=GS.battleState;
+  if(!bs)return;
+
+  // Background
+  CTX.fillStyle='#081820';CTX.fillRect(0,0,W,H);
+
+  // Battle ground
+  CTX.fillStyle='#2a5a2a';
+  CTX.fillRect(0,140,W,148);
+  CTX.fillStyle='#1a4a1a';
+  CTX.beginPath();CTX.ellipse(240,160,60,20,0,0,Math.PI*2);CTX.fill();
+  CTX.beginPath();CTX.ellipse(80,200,60,20,0,0,Math.PI*2);CTX.fill();
+
+  // Enemy sprite (top right)
+  const esprite=getBattleSprite(bs.enemy.id);
+  let ex=200+bs.shakeE,ey=60;
+  if(bs.flashE>0){CTX.globalAlpha=bs.flashE%4<2?0.3:1;}
+  CTX.drawImage(esprite,ex,ey,48,48);
+  CTX.globalAlpha=1;
+
+  // Player sprite (bottom left)
+  const psprite=getBattleSprite(bs.player.id);
+  let px=40+bs.shakeP,py=150;
+  if(bs.flashP>0){CTX.globalAlpha=bs.flashP%4<2?0.3:1;}
+  CTX.drawImage(psprite,px,py,48,48);
+  CTX.globalAlpha=1;
+
+  // Enemy info box
+  drawBox(140,10,170,50,'rgba(8,24,32,0.9)');
+  drawText(bs.enemy.name,148,26,'#e8e8e0',9);
+  drawText('Lv'+bs.enemy.level+' '+bs.enemy.types.join('/'),148,38,'#6abadc',7);
+  drawHP(148,52,100,bs.enemy.hp,bs.enemy.maxHp,'HP');
+  drawMoral(248,52,50,bs.enemy.moral);
+
+  // Player info box
+  drawBox(10,110,170,50,'rgba(8,24,32,0.9)');
+  drawText(bs.player.name,18,126,'#e8e8e0',9);
+  drawText('Lv'+bs.player.level+' '+bs.player.types.join('/'),18,138,'#6abadc',7);
+  drawHP(18,152,100,bs.player.hp,bs.player.maxHp,'HP');
+  drawMoral(118,152,50,bs.player.moral);
+}
+
+function drawBattle(){
+  const bs=GS.battleState;
+  if(!bs)return;
+
+  drawBattleField();
+
+  // Phase-specific UI
+  if(bs.phase==='intro'){
+    drawBox(10,H-60,W-20,52,'rgba(8,24,32,0.95)');
+    const introMsg=bs.isArena?'Arena-Kampf!':'Ein wilder '+bs.enemy.name+' erscheint!';
+    drawText(introMsg,20,H-40,'#e8d840',10);
+    drawText('SPACE zum Starten',20,H-22,'#808080',8);
+  }
+  else if(bs.phase==='select'){
+    // Move selection
+    drawBox(10,H-80,W-20,72,'rgba(8,24,32,0.95)');
+    drawText('Attacke wählen:',20,H-66,'#e8d840',9);
+    bs.player.moves.forEach((mId,i)=>{
+      const m=MOVES[mId];
+      if(!m)return;
+      const sel=i===bs.moveIdx;
+      const col=sel?'#e8d840':'#808080';
+      const x=20+(i%2)*150,y=H-50+Math.floor(i/2)*20;
+      drawText((sel?'▶':'  ')+m.name,x,y,col,9);
+      if(sel){
+        drawText(m.type+' Pw:'+m.power+' Ac:'+m.acc+'%',20,H-14,'#6abadc',7);
+      }
+    });
+  }
+  else if(bs.phase==='animate'||bs.phase==='enemySelect'){
+    drawBox(10,H-40,W-20,32,'rgba(8,24,32,0.95)');
+    drawText(bs.msg,20,H-22,'#e8e8e0',9);
+  }
+  else if(bs.phase==='result'){
+    drawBox(10,H-40,W-20,32,'rgba(8,24,32,0.95)');
+    drawText(bs.msg,20,H-22,'#e8e8e0',9);
+  }
+  else if(bs.phase==='catch'){
+    drawBox(10,H-60,W-20,52,'rgba(8,24,32,0.95)');
+    drawText(bs.enemy.name+' schließt sich',20,H-42,'#e8d840',10);
+    drawText('deinem Team an!',20,H-26,'#e8d840',10);
+  }
+  else if(bs.phase==='xp'){
+    drawBox(10,H-60,W-20,52,'rgba(8,24,32,0.95)');
+    drawText(bs.msg,20,H-42,'#e8e8e0',10);
+  }
+  else if(bs.phase==='end'){
+    drawBox(10,H-50,W-20,42,'rgba(8,24,32,0.95)');
+    drawText(bs.msg,20,H-32,'#e8e8e0',10);
+  }
+}
+
+function calcDamage(attacker,defender,moveId){
+  const m=MOVES[moveId];
+  if(!m||m.power===0)return 0;
+  let dmg=Math.floor((m.power*(attacker.atk+attacker.atkBoost*5))/(defender.def+defender.defBoost*5+20));
+  // Type effectiveness
+  const eff=typeEffect(m.type,defender.types[0]);
+  dmg=Math.floor(dmg*eff);
+  // Moral bonus
+  if(attacker.moral>80&&Math.random()<0.15)dmg=Math.floor(dmg*1.5); // crit
+  if(attacker.moral<40&&Math.random()<0.2)return 0; // miss from low morale
+  // Random variance
+  dmg=Math.floor(dmg*(0.85+Math.random()*0.3));
+  return Math.max(1,dmg);
+}
+
+function updateBattle(){
+  const bs=GS.battleState;
+  if(!bs)return;
+
+  // Shake decay
+  if(bs.shakeP!==0)bs.shakeP=bs.shakeP>0?bs.shakeP-1:bs.shakeP+1;
+  if(bs.shakeE!==0)bs.shakeE=bs.shakeE>0?bs.shakeE-1:bs.shakeE+1;
+  if(bs.flashP>0)bs.flashP--;
+  if(bs.flashE>0)bs.flashE--;
+
+  if(bs.phase==='intro'){
+    bs.introTimer++;
+    if(justPressed(' ')){bs.phase='select';bs.moveIdx=0;}
+  }
+  else if(bs.phase==='select'){
+    const nMoves=bs.player.moves.length;
+    if(justPressed('ArrowLeft')){bs.moveIdx=(bs.moveIdx-1+nMoves)%nMoves;playSFX('select');}
+    if(justPressed('ArrowRight')){bs.moveIdx=(bs.moveIdx+1)%nMoves;playSFX('select');}
+    if(justPressed('ArrowUp')){bs.moveIdx=(bs.moveIdx-2+nMoves)%nMoves;playSFX('select');}
+    if(justPressed('ArrowDown')){bs.moveIdx=(bs.moveIdx+2)%nMoves;playSFX('select');}
+    if(justPressed(' ')){
+      playSFX('confirm');
+      executePlayerMove(bs);
+    }
+  }
+  else if(bs.phase==='animate'){
+    bs.animTimer++;
+    if(bs.animTimer>40){
+      // Check if enemy fainted
+      if(bs.enemy.hp<=0){
+        bs.phase='result';
+        bs.msg=bs.enemy.name+' ist besiegt!';
+        bs.resultTimer=0;
+        bs.won=true;
+      } else {
+        // Enemy turn
+        executeEnemyMove(bs);
+      }
+    }
+  }
+  else if(bs.phase==='enemySelect'){
+    bs.animTimer++;
+    if(bs.animTimer>40){
+      // Check player fainted
+      if(bs.player.hp<=0){
+        // Try next team member
+        let nextIdx=-1;
+        for(let i=0;i<GS.team.length;i++){
+          if(i!==bs.playerIdx&&GS.team[i].hp>0){nextIdx=i;break;}
         }
-        
-        function drawMoveSelection() {
-            const player = battleState.playerTeam[battleState.currentPlayer];
-            const boxY = CANVAS_HEIGHT - 100;
-            const boxHeight = 90;
-            
-            drawPixelRect(10, boxY, CANVAS_WIDTH - 20, boxHeight, COLORS.WHITE);
-            drawPixelRect(12, boxY + 2, CANVAS_WIDTH - 24, boxHeight - 4, COLORS.BACKGROUND);
-            
-            drawText("Wähle einen Zug:", 20, boxY + 20, 10, COLORS.WHITE);
-            
-            player.moves.forEach((move, index) => {
-                const moveX = 20 + (index % 2) * 140;
-                const moveY = boxY + 40 + Math.floor(index / 2) * 20;
-                
-                const color = battleState.selectedMove === index ? COLORS.GOLD : COLORS.WHITE;
-                drawText(`${index + 1}. ${move.name}`, moveX, moveY, 9, color);
-            });
+        if(nextIdx>=0){
+          bs.playerIdx=nextIdx;
+          bs.player=GS.team[nextIdx];
+          bs.msg=bs.player.name+' tritt an!';
+          bs.phase='animate';bs.animTimer=20;
+        } else {
+          bs.phase='end';
+          bs.msg='Alle Spieler besiegt... Zurück nach Giesing!';
+          bs.won=false;
+          bs.resultTimer=0;
         }
-        
-        function drawTitleScreen() {
-            // Background
-            ctx.fillStyle = COLORS.BACKGROUND;
-            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            
-            // Title
-            drawText("SECHZGER", CANVAS_WIDTH/2 - 50, 80, 20, COLORS.GOLD);
-            drawText("Das 1860 RPG", CANVAS_WIDTH/2 - 45, 110, 12, COLORS.WHITE);
-            
-            // Subtitle
-            drawText("Ein Pokémon-Style Abenteuer", CANVAS_WIDTH/2 - 80, 140, 10, COLORS.BLUE);
-            drawText("durch die Geschichte des", CANVAS_WIDTH/2 - 75, 155, 10, COLORS.BLUE);
-            drawText("TSV 1860 München", CANVAS_WIDTH/2 - 50, 170, 10, COLORS.BLUE);
-            
-            // Instructions
-            drawText("Drücke LEERTASTE zum Starten", CANVAS_WIDTH/2 - 90, 220, 10, COLORS.WHITE);
-            
-            // Logo (simplified)
-            drawPixelRect(CANVAS_WIDTH/2 - 15, 30, 30, 30, COLORS.BLUE);
-            drawPixelRect(CANVAS_WIDTH/2 - 10, 35, 20, 20, COLORS.GOLD);
-            drawText("1860", CANVAS_WIDTH/2 - 12, 52, 8, COLORS.WHITE);
+      } else {
+        bs.phase='select';bs.moveIdx=0;
+      }
+    }
+  }
+  else if(bs.phase==='result'){
+    bs.resultTimer++;
+    if(justPressed(' ')&&bs.resultTimer>20){
+      if(bs.won){
+        // Check if more enemies
+        let nextE=-1;
+        for(let i=bs.enemyIdx+1;i<bs.enemyTeam.length;i++){
+          if(bs.enemyTeam[i].hp>0){nextE=i;break;}
         }
-        
-        // Game logic functions
-        function updatePlayer() {
-            if (gameState !== GAME_STATES.OVERWORLD) return;
-            
-            let newX = player.x;
-            let newY = player.y;
-            let isMoving = false;
-            
-            if (keys['KeyW'] || keys['ArrowUp']) {
-                newY -= PLAYER_SPEED;
-                player.direction = 'up';
-                isMoving = true;
-            }
-            if (keys['KeyS'] || keys['ArrowDown']) {
-                newY += PLAYER_SPEED;
-                player.direction = 'down';
-                isMoving = true;
-            }
-            if (keys['KeyA'] || keys['ArrowLeft']) {
-                newX -= PLAYER_SPEED;
-                player.direction = 'left';
-                isMoving = true;
-            }
-            if (keys['KeyD'] || keys['ArrowRight']) {
-                newX += PLAYER_SPEED;
-                player.direction = 'right';
-                isMoving = true;
-            }
-            
-            // Collision detection
-            if (canMoveTo(newX, newY)) {
-                player.x = newX;
-                player.y = newY;
-                player.isMoving = isMoving;
-                
-                // Update camera
-                camera.x = player.x - CANVAS_WIDTH / 2;
-                camera.y = player.y - CANVAS_HEIGHT / 2;
-                
-                // Keep camera in bounds
-                const mapData = MAPS[currentMap];
-                camera.x = Math.max(0, Math.min(camera.x, mapData.width * TILE_SIZE - CANVAS_WIDTH));
-                camera.y = Math.max(0, Math.min(camera.y, mapData.height * TILE_SIZE - CANVAS_HEIGHT));
-            }
-            
-            // Animation
-            if (isMoving) {
-                player.animTimer += 1;
-                if (player.animTimer >= 15) {
-                    player.frame = 1 - player.frame;
-                    player.animTimer = 0;
-                }
+        if(nextE>=0){
+          bs.enemyIdx=nextE;
+          bs.enemy=bs.enemyTeam[nextE];
+          bs.msg=bs.enemy.name+' tritt an!';
+          bs.phase='animate';bs.animTimer=20;
+          bs.won=false;
+        } else {
+          // All enemies defeated
+          if(!bs.isArena){
+            // Wild: catch
+            const alreadyHave=GS.team.some(p=>p.id===bs.enemyTeam[0].id);
+            if(!alreadyHave&&GS.team.length<6){
+              bs.phase='catch';
+              bs.caught=true;
+              playSFX('catch');
             } else {
-                player.frame = 0;
+              // XP
+              handleXPPhase(bs);
             }
-            
-            // Interaction
-            if (keysPressed[' ']) {
-                checkInteractions();
-                keysPressed[' '] = false;
-            }
+          } else {
+            handleXPPhase(bs);
+          }
+          // Mark NPC defeated
+          if(bs.npcKey)GS.npcsDefeated[bs.npcKey]=true;
         }
-        
-        function canMoveTo(x, y) {
-            const mapData = MAPS[currentMap];
-            const tileX = Math.floor(x / TILE_SIZE);
-            const tileY = Math.floor(y / TILE_SIZE);
-            
-            if (tileX < 0 || tileX >= mapData.width || tileY < 0 || tileY >= mapData.height) {
-                return false;
-            }
-            
-            const tileType = mapData.tiles[tileY * mapData.width + tileX];
-            return tileType !== 2 && tileType !== 3; // Can't walk through buildings or trees
+      } else {
+        // Lost
+        if(justPressed(' ')){
+          endBattle(false);
         }
-        
-        function checkInteractions() {
-            const mapData = MAPS[currentMap];
-            const interactionDistance = 20;
-            
-            // Check NPCs
-            mapData.npcs.forEach(npc => {
-                const distance = Math.sqrt(Math.pow(player.x - npc.x, 2) + Math.pow(player.y - npc.y, 2));
-                if (distance < interactionDistance) {
-                    showDialog = true;
-                    dialogText = npc.text;
-                    gameState = GAME_STATES.DIALOG;
-                    playMenuSound();
-                }
+      }
+    }
+  }
+  else if(bs.phase==='catch'){
+    if(justPressed(' ')){
+      const wild=bs.enemyTeam[0];
+      GS.team.push(makePlayerInstance(wild.id,wild.level));
+      playSFX('catch');
+      handleXPPhase(bs);
+    }
+  }
+  else if(bs.phase==='xp'){
+    bs.resultTimer++;
+    if(justPressed(' ')&&bs.resultTimer>10){
+      if(bs.isArena){
+        const idx=bs.arenaIdx;
+        if(idx>=0&&idx<4){
+          GS.badges[idx]=true;
+          const leader=ARENA_LEADERS[idx];
+          // Give reward player
+          if(!GS.team.some(p=>p.id===leader.reward)&&GS.team.length<6){
+            GS.team.push(makePlayerInstance(leader.reward,bs.enemyTeam[bs.enemyTeam.length-1].level));
+          }
+          stopBGM();
+          playSFX('victory');
+          // Check if all badges
+          if(GS.badges.every(b=>b)){
+            startDialog(['GLÜCKWUNSCH!','Du hast alle 4 Arenen besiegt!','TSV 1860 München ist gerettet!','Die Geschichte lebt weiter!','EINMAL LÖWE, IMMER LÖWE!'],()=>{
+              GS.battleState=null;GS.mode='overworld';startBGM('overworld');
             });
-            
-            // Check arenas
-            mapData.arenas.forEach(arena => {
-                const distance = Math.sqrt(Math.pow(player.x - arena.x, 2) + Math.pow(player.y - arena.y, 2));
-                if (distance < interactionDistance) {
-                    if (playerData.arenaProgress >= Object.keys(ARENAS).indexOf(arena.id)) {
-                        startBattle(arena.id);
-                    } else {
-                        showDialog = true;
-                        dialogText = "Du musst zuerst die vorherigen Arenen besiegen!";
-                        gameState = GAME_STATES.DIALOG;
-                        playMenuSound();
-                    }
-                }
+          } else {
+            startDialog(leader.winDialog,()=>{
+              GS.battleState=null;GS.mode='overworld';startBGM('overworld');
             });
+          }
+          return;
         }
-        
-        function startBattle(arenaId) {
-            const arena = ARENAS[arenaId];
-            if (!arena) return;
-            
-            gameState = GAME_STATES.BATTLE;
-            
-            // Initialize player team (for demo, give starter team)
-            if (playerData.team.length === 0) {
-                playerData.team.push({...PLAYERS.turner1});
-            }
-            
-            battleState.playerTeam = [...playerData.team];
-            battleState.enemyTeam = [...arena.enemies];
-            battleState.currentPlayer = 0;
-            battleState.currentEnemy = 0;
-            battleState.turn = 'player';
-            battleState.selectedMove = -1;
-            battleState.battleText = `${arena.leader} fordert dich heraus!`;
-            battleState.effects = { player: {}, enemy: {} };
-            
-            playBattleStartJingle();
-        }
-        
-        function updateBattle() {
-            if (gameState !== GAME_STATES.BATTLE) return;
-            
-            if (battleState.turn === 'player') {
-                // Handle move selection
-                if (keysPressed['Digit1']) {
-                    battleState.selectedMove = 0;
-                    keysPressed['Digit1'] = false;
-                }
-                if (keysPressed['Digit2']) {
-                    battleState.selectedMove = 1;
-                    keysPressed['Digit2'] = false;
-                }
-                if (keysPressed['Digit3']) {
-                    battleState.selectedMove = 2;
-                    keysPressed['Digit3'] = false;
-                }
-                if (keysPressed['Digit4']) {
-                    battleState.selectedMove = 3;
-                    keysPressed['Digit4'] = false;
-                }
-                
-                if (battleState.selectedMove >= 0) {
-                    executePlayerMove();
-                }
-            }
-            
-            // Continue battle text with spacebar
-            if (keysPressed[' '] && battleState.battleText) {
-                keysPressed[' '] = false;
-                
-                if (battleState.turn === 'enemy') {
-                    executeEnemyMove();
-                } else if (battleState.turn === 'checkEnd') {
-                    checkBattleEnd();
-                } else {
-                    battleState.battleText = '';
-                }
-            }
-        }
-        
-        function executePlayerMove() {
-            const player = battleState.playerTeam[battleState.currentPlayer];
-            const enemy = battleState.enemyTeam[battleState.currentEnemy];
-            const move = player.moves[battleState.selectedMove];
-            
-            playSelectSound();
-            
-            let damage = 0;
-            battleState.battleText = `${player.name} setzt ${move.name} ein!`;
-            
-            // Calculate damage and effects
-            if (move.power > 0) {
-                damage = move.power;
-                
-                // Type effectiveness
-                const effectiveness = getTypeEffectiveness(move.type, enemy.type[0]);
-                damage = Math.floor(damage * effectiveness);
-                
-                // Moral affects accuracy
-                const accuracy = 0.7 + (player.moral / player.maxMoral) * 0.3;
-                const hitChance = Math.random();
-                
-                if (hitChance <= accuracy) {
-                    enemy.hp = Math.max(0, enemy.hp - damage);
-                    
-                    if (effectiveness > 1) {
-                        battleState.battleText += " Es ist sehr effektiv!";
-                    } else if (effectiveness < 1) {
-                        battleState.battleText += " Es ist nicht sehr effektiv...";
-                    }
-                } else {
-                    battleState.battleText += " Der Angriff geht daneben!";
-                }
-            }
-            
-            // Handle special effects
-            handleMoveEffect(move, player, enemy, true);
-            
-            battleState.selectedMove = -1;
-            battleState.turn = 'enemy';
-        }
-        
-        function executeEnemyMove() {
-            const player = battleState.playerTeam[battleState.currentPlayer];
-            const enemy = battleState.enemyTeam[battleState.currentEnemy];
-            const moveIndex = Math.floor(Math.random() * enemy.moves.length);
-            const move = enemy.moves[moveIndex];
-            
-            let damage = 0;
-            battleState.battleText = `${enemy.name} setzt ${move.name} ein!`;
-            
-            if (move.power > 0) {
-                damage = move.power;
-                
-                const effectiveness = getTypeEffectiveness(move.type, player.type[0]);
-                damage = Math.floor(damage * effectiveness);
-                
-                const accuracy = 0.7 + (enemy.moral / enemy.maxMoral) * 0.3;
-                const hitChance = Math.random();
-                
-                if (hitChance <= accuracy) {
-                    player.hp = Math.max(0, player.hp - damage);
-                    
-                    if (effectiveness > 1) {
-                        battleState.battleText += " Es ist sehr effektiv!";
-                    } else if (effectiveness < 1) {
-                        battleState.battleText += " Es ist nicht sehr effektiv...";
-                    }
-                } else {
-                    battleState.battleText += " Der Angriff geht daneben!";
-                }
-            }
-            
-            handleMoveEffect(move, enemy, player, false);
-            
-            battleState.turn = 'checkEnd';
-        }
-        
-        function getTypeEffectiveness(attackType, defendType) {
-            if (attackType === TYPES.HERZ) return 1;
-            
-            const typeData = TYPE_EFFECTIVENESS[attackType];
-            if (typeData.strong.includes(defendType)) return 1.5;
-            if (typeData.weak.includes(defendType)) return 0.67;
-            return 1;
-        }
-        
-        function handleMoveEffect(move, attacker, target, isPlayer) {
-            switch(move.effect) {
-                case 'healTeamMoral':
-                    battleState.playerTeam.forEach(p => {
-                        p.moral = Math.min(p.maxMoral, p.moral + 30);
-                    });
-                    battleState.battleText += ` Das Team wird ermutigt!`;
-                    break;
-                    
-                case 'confuse':
-                    if (isPlayer) {
-                        battleState.effects.enemy.confused = 2;
-                    } else {
-                        battleState.effects.player.confused = 2;
-                    }
-                    battleState.battleText += ` ${target.name} ist verwirrt!`;
-                    break;
-                    
-                case 'heal':
-                    attacker.hp = Math.min(attacker.maxHp, attacker.hp + 40);
-                    battleState.battleText += ` ${attacker.name} wurde geheilt!`;
-                    break;
-                    
-                case 'moralBoost':
-                    attacker.moral = Math.min(attacker.maxMoral, attacker.moral + 25);
-                    battleState.battleText += ` ${attacker.name} fühlt sich besser!`;
-                    break;
-            }
-        }
-        
-        function checkBattleEnd() {
-            const player = battleState.playerTeam[battleState.currentPlayer];
-            const enemy = battleState.enemyTeam[battleState.currentEnemy];
-            
-            if (player.hp <= 0) {
-                battleState.battleText = `${player.name} ist kampfunfähig!`;
-                player.moral = Math.max(0, player.moral - 20);
-                
-                // Check if player has more team members
-                const alivePlayer = battleState.playerTeam.find(p => p.hp > 0);
-                if (alivePlayer) {
-                    battleState.currentPlayer = battleState.playerTeam.indexOf(alivePlayer);
-                    battleState.turn = 'player';
-                } else {
-                    // Player loses
-                    battleState.battleText = "Du hast verloren! Dein Team braucht Erholung.";
-                    setTimeout(() => {
-                        gameState = GAME_STATES.OVERWORLD;
-                        // Heal team slightly
-                        battleState.playerTeam.forEach(p => {
-                            p.hp = Math.floor(p.maxHp * 0.3);
-                            p.moral = Math.max(20, p.moral - 10);
-                        });
-                        playerData.team = battleState.playerTeam;
-                    }, 3000);
-                }
-            } else if (enemy.hp <= 0) {
-                battleState.battleText = `${enemy.name} ist besiegt!`;
-                enemy.moral = Math.max(0, enemy.moral - 30);
-                player.moral = Math.min(player.maxMoral, player.moral + 15);
-                
-                // Check if enemy has more team members
-                const aliveEnemy = battleState.enemyTeam.find(e => e.hp > 0);
-                if (aliveEnemy) {
-                    battleState.currentEnemy = battleState.enemyTeam.indexOf(aliveEnemy);
-                    battleState.turn = 'player';
-                } else {
-                    // Player wins
-                    playVictoryJingle();
-                    battleState.battleText = "Du hast gewonnen! Du hast die Arena besiegt!";
-                    playerData.arenaProgress++;
-                    
-                    // Add reward player to team
-                    const arenaKey = Object.keys(ARENAS)[playerData.arenaProgress - 1];
-                    const arena = ARENAS[arenaKey];
-                    if (arena && arena.reward.player) {
-                        const newPlayer = {...PLAYERS[arena.reward.player]};
-                        newPlayer.name = `Rekrutierter ${newPlayer.name}`;
-                        playerData.team.push(newPlayer);
-                        battleState.battleText += ` ${newPlayer.name} schließt sich deinem Team an!`;
-                    }
-                    
-                    setTimeout(() => {
-                        gameState = GAME_STATES.OVERWORLD;
-                        playerData.team = battleState.playerTeam;
-                        saveGameData();
-                    }, 5000);
-                }
-            } else {
-                battleState.turn = 'player';
-            }
-        }
-        
-        function updateDialog() {
-            if (keysPressed[' ']) {
-                showDialog = false;
-                gameState = GAME_STATES.OVERWORLD;
-                keysPressed[' '] = false;
-            }
-        }
-        
-        function saveGameData() {
-            localStorage.setItem('sechzger_save', JSON.stringify(playerData));
-        }
-        
-        function loadGameData() {
-            const saved = localStorage.getItem('sechzger_save');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    playerData = {...playerData, ...data};
-                } catch (e) {
-                    console.log('Could not load save data');
-                }
-            }
-        }
-        
-        // Main game loop
-        function gameLoop() {
-            // Clear screen
-            ctx.fillStyle = COLORS.BACKGROUND;
-            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            
-            switch(gameState) {
-                case GAME_STATES.TITLE:
-                    drawTitleScreen();
-                    if (keysPressed[' ']) {
-                        gameState = GAME_STATES.OVERWORLD;
-                        loadGameData();
-                        keysPressed[' '] = false;
-                        playSelectSound();
-                    }
-                    break;
-                    
-                case GAME_STATES.OVERWORLD:
-                    updatePlayer();
-                    drawMap();
-                    drawPlayer(player.x - camera.x, player.y - camera.y, player.direction, player.frame);
-                    break;
-                    
-                case GAME_STATES.BATTLE:
-                    updateBattle();
-                    drawBattleScreen();
-                    break;
-                    
-                case GAME_STATES.DIALOG:
-                    updateDialog();
-                    drawMap();
-                    drawPlayer(player.x - camera.x, player.y - camera.y, player.direction, player.frame);
-                    drawDialogBox(dialogText);
-                    break;
-            }
-            
-            // Reset key presses
-            Object.keys(keysPressed).forEach(key => {
-                keysPressed[key] = false;
-            });
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // Scale canvas to fit screen
-        function resizeCanvas() {
-            const container = document.getElementById('gameContainer');
-            const rect = container.getBoundingClientRect();
-            const scaleX = window.innerWidth / CANVAS_WIDTH;
-            const scaleY = window.innerHeight / CANVAS_HEIGHT;
-            const scale = Math.min(scaleX, scaleY) * 0.9; // Leave some margin
-            
-            container.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        
-        // Start the game
-        gameLoop();
-        
-        // Initialize first player in team if empty
-        if (playerData.team.length === 0) {
-            playerData.team.push({...PLAYERS.turner1});
-        }
-        
-        console.log('SECHZGER - Das 1860 RPG geladen!');
-    </script>
+      }
+      endBattle(true);
+    }
+  }
+  else if(bs.phase==='end'){
+    bs.resultTimer++;
+    if(justPressed(' ')&&bs.resultTimer>20){
+      endBattle(bs.won);
+    }
+  }
+}
+
+function executePlayerMove(bs){
+  const moveId=bs.player.moves[bs.moveIdx];
+  const m=MOVES[moveId];
+  bs.phase='animate';bs.animTimer=0;
+
+  // Check accuracy
+  const accMod=bs.player.moral<40?0.8:1;
+  if(Math.random()*100>m.acc*accMod){
+    bs.msg=bs.player.name+': '+m.name+' - Daneben!';
+    playSFX('miss');
+    return;
+  }
+
+  if(m.power>0){
+    const dmg=calcDamage(bs.player,bs.enemy,moveId);
+    bs.enemy.hp=Math.max(0,bs.enemy.hp-dmg);
+    const eff=typeEffect(m.type,bs.enemy.types[0]);
+    bs.shakeE=6;
+    if(eff>1){bs.flashE=12;playSFX('superHit');bs.msg=bs.player.name+': '+m.name+'! Sehr effektiv! -'+dmg+'HP';}
+    else if(eff<1){playSFX('hit');bs.msg=bs.player.name+': '+m.name+'... Nicht effektiv. -'+dmg+'HP';}
+    else{playSFX('hit');bs.msg=bs.player.name+': '+m.name+'! -'+dmg+'HP';}
+    bs.enemy.moral=Math.max(0,bs.enemy.moral-3);
+  } else if(m.stat==='def'){
+    bs.player.defBoost+=m.boost;
+    bs.msg=bs.player.name+': '+m.name+'! Verteidigung steigt!';
+    playSFX('confirm');
+  } else if(m.heal){
+    bs.player.moral=Math.min(100,bs.player.moral+m.heal);
+    bs.msg=bs.player.name+': '+m.name+'! Moral steigt!';
+    playSFX('confirm');
+  }
+}
+
+function executeEnemyMove(bs){
+  // AI: pick random move
+  const moveId=bs.enemy.moves[Math.floor(Math.random()*bs.enemy.moves.length)];
+  const m=MOVES[moveId];
+  bs.phase='enemySelect';bs.animTimer=0;
+
+  if(!m){bs.msg='...';return;}
+
+  const accMod=bs.enemy.moral<40?0.8:1;
+  if(Math.random()*100>m.acc*accMod){
+    bs.msg=bs.enemy.name+': '+m.name+' - Daneben!';
+    playSFX('miss');
+    return;
+  }
+
+  if(m.power>0){
+    const dmg=calcDamage(bs.enemy,bs.player,moveId);
+    bs.player.hp=Math.max(0,bs.player.hp-dmg);
+    const eff=typeEffect(m.type,bs.player.types[0]);
+    bs.shakeP=6;
+    if(eff>1){bs.flashP=12;playSFX('superHit');bs.msg=bs.enemy.name+': '+m.name+'! Sehr effektiv! -'+dmg+'HP';}
+    else{playSFX('hit');bs.msg=bs.enemy.name+': '+m.name+'! -'+dmg+'HP';}
+    bs.player.moral=Math.max(0,bs.player.moral-2);
+  } else if(m.stat==='def'){
+    bs.enemy.defBoost+=m.boost;
+    bs.msg=bs.enemy.name+': '+m.name+'! Verteidigung steigt!';
+  } else if(m.heal){
+    bs.enemy.moral=Math.min(100,bs.enemy.moral+m.heal);
+    bs.msg=bs.enemy.name+': '+m.name+'! Moral steigt!';
+  }
+}
+
+function handleXPPhase(bs){
+  const xpGain=bs.enemyTeam.reduce((s,e)=>s+e.level*8,0);
+  bs.xpGain=xpGain;
+  const leveled=gainXP(bs.player,xpGain);
+  bs.phase='xp';bs.resultTimer=0;
+  bs.msg=bs.player.name+' erhält '+xpGain+' XP!'+(leveled?' LEVEL UP!':'');
+  if(leveled)playSFX('levelup');
+}
+
+function endBattle(won){
+  stopBGM();
+  GS.battleState=null;
+  if(!won){
+    // Heal and send back to Giesing
+    GS.team.forEach(p=>{p.hp=Math.max(1,Math.floor(p.maxHp*0.3));p.moral=50;});
+    GS.map=0;GS.px=15;GS.py=10;
+  }
+  GS.mode='overworld';
+  startBGM('overworld');
+}
+
+// === SAVE/LOAD ===
+function saveGame(){
+  const data={
+    map:GS.map,px:GS.px,py:GS.py,pdir:GS.pdir,
+    team:GS.team,items:GS.items,badges:GS.badges,
+    npcsDefeated:GS.npcsDefeated
+  };
+  localStorage.setItem('tsvRPG',JSON.stringify(data));
+  GS.saved=true;
+}
+
+function loadGame(){
+  const raw=localStorage.getItem('tsvRPG');
+  if(!raw)return false;
+  try{
+    const data=JSON.parse(raw);
+    GS.map=data.map;GS.px=data.px;GS.py=data.py;GS.pdir=data.pdir||0;
+    GS.team=data.team||[];GS.items=data.items||[];GS.badges=data.badges||[false,false,false,false];
+    GS.npcsDefeated=data.npcsDefeated||{};
+    // Restore functions lost in serialization
+    GS.team.forEach(p=>{
+      const def=PLAYERS.find(d=>d.id===p.id);
+      if(def&&!p.moves)p.moves=def.moves.slice(0,4);
+    });
+    initMaps();
+    GS.mode='overworld';
+    return true;
+  }catch(e){return false;}
+}
+
+// === MAIN LOOP ===
+function gameLoop(){
+  GS.frameCount++;
+  keyJustPressed={};
+
+  // Process input
+  for(const k in keyJustPressed)keyJustPressed[k]=false;
+}
+
+// We need to handle justPressed properly
+let prevKeys={};
+function processInput(){
+  // Merge event-driven presses with edge-detection
+  const merged={..._pendingKeys};
+  for(const k in KEYS){
+    if(KEYS[k]&&!prevKeys[k])merged[k]=true;
+  }
+  keyJustPressed=merged;
+  _pendingKeys={};
+  prevKeys={...KEYS};
+}
+
+function update(){
+  processInput();
+  GS.frameCount++;
+
+  switch(GS.mode){
+    case 'title':updateTitle();break;
+    case 'starterSelect':updateStarterSelect();break;
+    case 'overworld':updateOverworld();break;
+    case 'battle':updateBattle();break;
+    case 'dialog':updateDialog();break;
+    case 'menu':updateMenu();break;
+    case 'transition':updateTransition();break;
+  }
+}
+
+function draw(){
+  CTX.clearRect(0,0,W,H);
+  switch(GS.mode){
+    case 'title':drawTitle();break;
+    case 'starterSelect':drawStarterSelect();break;
+    case 'overworld':drawOverworld();break;
+    case 'battle':drawBattle();break;
+    case 'dialog':drawDialog();break;
+    case 'menu':drawMenu();break;
+    case 'transition':drawTransition();break;
+  }
+}
+
+function mainLoop(){
+  update();
+  draw();
+  if(document.hidden){setTimeout(mainLoop,16);}else{requestAnimationFrame(mainLoop);}
+}
+
+// === INIT ===
+function init(){
+  initTileCache();
+  initPlayerSprite();
+  initMaps();
+  GS.mode='title';
+  GS.titleTimer=0;
+  GS.titleSel=0;
+  mainLoop();
+}
+
+init();
+</script>
 </body>
 </html>
