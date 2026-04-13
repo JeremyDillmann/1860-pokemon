@@ -278,7 +278,12 @@ const PAL={
   npc:['transparent','#5a3a1a','#c04040','#e8e8e0'],
   portal:['transparent','#4020a0','#8040e0','#c080ff'],
   arena:['transparent','#8a7040','#d0a020','#e8d840'],
-  sepia:['transparent','#5a4a2a','#8a7040','#c0a060']
+  sepia:['transparent','#5a4a2a','#8a7040','#c0a060'],
+  floor:['transparent','#3a2a1a','#5a4020','#7a5a30'],
+  bar:['transparent','#2a1a0a','#5a3a1a','#8a6a30'],
+  table:['transparent','#3a2010','#6a4a20','#e8d840'],
+  keg:['transparent','#2a1a0a','#5a3a1a','#c0a060'],
+  wall_interior:['transparent','#1a1a2a','#2a2a4a','#2a6aac']
 };
 
 // 16x16 tile sprites as arrays of color indices
@@ -484,6 +489,82 @@ TILES.sign=(function(){
   return d;
 })();
 
+// === INTERIOR TILES ===
+// Wooden floor - dark planks
+TILES.floor=(function(){
+  const d=new Array(256).fill(2);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const i=y*16+x;
+    if(y%4===0)d[i]=1; // plank gaps
+    else if((x+y*3)%7===0)d[i]=3; // wood grain highlights
+    else if((x*2+y)%11===0)d[i]=1; // knots
+  }
+  return d;
+})();
+
+// Bar counter - polished wood top with front panel
+TILES.bar=(function(){
+  const d=new Array(256).fill(2);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const i=y*16+x;
+    if(y<3){d[i]=3;} // polished top
+    else if(y===3){d[i]=1;} // edge
+    else if(y<14){
+      d[i]=(x%4===0)?1:2; // panels
+      if(y===8)d[i]=1; // horizontal divider
+    }
+    else d[i]=1; // base
+  }
+  return d;
+})();
+
+// Table - round wooden table top view
+TILES.table=(function(){
+  const d=new Array(256).fill(0);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const dx=x-7.5,dy=y-7.5,dist=Math.sqrt(dx*dx+dy*dy);
+    const i=y*16+x;
+    if(dist<=6){
+      d[i]=2; // table surface
+      if(dist>5)d[i]=1; // rim
+      if(dist<=2)d[i]=3; // beer mug in center!
+    }
+  }
+  return d;
+})();
+
+// Beer keg - barrel shape
+TILES.keg=(function(){
+  const d=new Array(256).fill(0);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const i=y*16+x;
+    // barrel body
+    const cx=7.5,bulge=Math.sin((y/15)*Math.PI)*2;
+    if(x>=4-bulge&&x<=11+bulge&&y>=2&&y<=13){
+      d[i]=2;
+      if(y===2||y===13||x<=4-bulge||x>=11+bulge)d[i]=1; // rim/staves
+      if(y===7&&x>=6&&x<=9)d[i]=3; // tap
+    }
+    // stand
+    if(y>=14&&x>=5&&x<=10)d[i]=1;
+  }
+  return d;
+})();
+
+// Interior wall
+TILES.wall_interior=(function(){
+  const d=new Array(256).fill(1);
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    const i=y*16+x;
+    if(y%4===0||x%6===0)d[i]=1;
+    else d[i]=2;
+    // 1860 poster/pennant on some walls
+    if(y>=4&&y<=8&&x>=5&&x<=10){d[i]=3;}
+    if(y>=5&&y<=7&&x>=6&&x<=9){d[i]=1;} // lion silhouette
+  }
+  return d;
+})();
+
 function cacheTile(tileData,pal){
   const cv=document.createElement('canvas');
   cv.width=16;cv.height=16;
@@ -509,6 +590,12 @@ function initTileCache(){
   TILE_CACHE.portal=cacheTile(TILES.portal,PAL.portal);
   TILE_CACHE.arena=cacheTile(TILES.arena,PAL.arena);
   TILE_CACHE.sign=cacheTile(TILES.sign,['transparent','#5a3a1a','#c0a060','#e8e8e0']);
+  // interior tiles
+  TILE_CACHE.floor=cacheTile(TILES.floor,PAL.floor);
+  TILE_CACHE.bar=cacheTile(TILES.bar,PAL.bar);
+  TILE_CACHE.table=cacheTile(TILES.table,PAL.table);
+  TILE_CACHE.keg=cacheTile(TILES.keg,PAL.keg);
+  TILE_CACHE.wall_interior=cacheTile(TILES.wall_interior,PAL.wall_interior);
   // sepia variants
   TILE_CACHE.grass_s=cacheTile(TILES.grass,PAL.sepia);
   TILE_CACHE.tallgrass_s=cacheTile(TILES.tallgrass,['transparent','#5a4a2a','#8a7040','#b09050']);
@@ -865,9 +952,9 @@ function getBattleSprite(id){
 }
 
 // === MAPS ===
-// Tile types: 0=grass,1=tallgrass,2=path,3=tree,4=building,5=water,6=portal,7=arena,8=sign
-// Collision: tree,building,water,sign = blocked
-const BLOCKED=new Set([3,4,5,8]);
+// Tile types: 0=grass,1=tallgrass,2=path,3=tree,4=building,5=water,6=portal,7=arena,8=sign,9=floor,10=bar,11=table,12=keg,13=wall_interior
+// Collision: tree,building,water,sign,bar,table,keg,wall_interior = blocked
+const BLOCKED=new Set([3,4,5,8,10,11,12,13]);
 
 function generateMap(idx){
   const map=new Array(MH).fill(null).map(()=>new Array(MW).fill(0));
@@ -908,6 +995,12 @@ function generateMap(idx){
     map[13][12]=4;map[13][13]=4;map[14][12]=4;map[14][13]=4;
     // Kyso (rechts unten)
     map[16][12]=4;map[16][13]=4;map[17][12]=4;map[17][13]=4;
+
+    // Kneipen-Portale (Eingänge)
+    map[14][9]=6;portals.push({x:9,y:14,toMap:5,toX:5,toY:8,label:'Schönstüberl'});
+    map[16][9]=6;portals.push({x:9,y:16,toMap:6,toX:5,toY:8,label:'Trepperlwirt'});
+    map[14][12]=6;portals.push({x:12,y:14,toMap:7,toX:5,toY:8,label:'Kastaniengarten'});
+    map[16][12]=6;portals.push({x:12,y:16,toMap:8,toX:5,toY:8,label:'Kyso'});
 
     // Kneipen-NPCs - Löwenfans als Türsteher in Blau mit Baseballschläger
     npcs.push({x:10,y:15,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#1a3a5c'),
@@ -1106,6 +1199,105 @@ function generateMap(idx){
       name:'Schickeria Sarah',battle:true,team:[makePlayerInstance('bayernfan_now',16)],
       defeated:false,defKey:'4_sarah'});
   }
+  // === KNEIPEN INTERIORS (maps 5-8) ===
+  if(idx>=5&&idx<=8){
+    const kneipenNames=['Schönstüberl','Trepperlwirt','Kastaniengarten','Kyso'];
+    const kneipeName=kneipenNames[idx-5];
+    // Walls around the room
+    for(let x=0;x<MW;x++)for(let y=0;y<MH;y++){
+      if(x===0||x===MW-1||y===0||y===MH-1)map[y][x]=13;
+      else map[y][x]=9; // wooden floor
+    }
+    // Second wall row for thickness
+    for(let x=1;x<MW-1;x++){map[1][x]=13;map[MH-2][x]=13;}
+    for(let y=1;y<MH-1;y++){map[y][1]=13;map[y][MW-2]=13;}
+
+    // Bar counter (along back wall, y=2)
+    for(let x=3;x<MW-3;x++)map[2][x]=10;
+    // Beer kegs behind bar
+    map[2][3]=12;map[2][MW-4]=12;
+    // Extra kegs in corner
+    map[3][2]=12;map[3][MW-3]=12;
+
+    // Tables scattered around the pub
+    map[5][4]=11;map[5][8]=11;map[5][12]=11;
+    map[8][3]=11;map[8][7]=11;map[8][11]=11;
+    map[11][5]=11;map[11][9]=11;
+
+    // 1860 decoration walls (poster areas)
+    map[4][2]=13;map[6][2]=13;map[4][MW-3]=13;map[6][MW-3]=13;
+
+    // Portal back to Kneipenstraße
+    const backPositions=[
+      {toX:9,toY:15},  // Schönstüberl → near its door
+      {toX:9,toY:17},  // Trepperlwirt
+      {toX:12,toY:15}, // Kastaniengarten
+      {toX:12,toY:17}  // Kyso
+    ];
+    const bp=backPositions[idx-5];
+    map[MH-2][5]=6;portals.push({x:5,y:MH-2,toMap:0,toX:bp.toX,toY:bp.toY,label:'Kneipenstraße'});
+
+    // === TATTOOED BARTENDER (Wirt) ===
+    function makeWirtSprite(hairCol){
+      const cv=document.createElement('canvas');cv.width=16;cv.height=16;
+      const cx=cv.getContext('2d');
+      // head
+      cx.fillStyle='#e0b080';cx.fillRect(5,0,6,5);
+      // hair
+      cx.fillStyle=hairCol;cx.fillRect(5,0,6,2);
+      // beard
+      cx.fillStyle='#5a3a1a';cx.fillRect(6,4,4,2);
+      // body (black shirt, muscular)
+      cx.fillStyle='#1a1a1a';cx.fillRect(3,6,10,6);
+      // tattoo arms (blue ink on skin)
+      cx.fillStyle='#e0b080';cx.fillRect(1,6,2,5);cx.fillRect(13,6,2,5);
+      cx.fillStyle='#2a6aac';
+      cx.fillRect(1,7,1,1);cx.fillRect(2,8,1,1);cx.fillRect(1,9,1,1); // left arm tattoo
+      cx.fillRect(14,7,1,1);cx.fillRect(13,8,1,1);cx.fillRect(14,9,1,1); // right arm tattoo
+      // hands
+      cx.fillStyle='#e0b080';cx.fillRect(1,11,2,2);cx.fillRect(13,11,2,2);
+      // apron
+      cx.fillStyle='#e8e8e0';cx.fillRect(4,10,8,3);
+      // legs
+      cx.fillStyle='#2a2a2a';cx.fillRect(4,12,3,3);cx.fillRect(9,12,3,3);
+      // boots
+      cx.fillStyle='#1a1a1a';cx.fillRect(4,15,3,1);cx.fillRect(9,15,3,1);
+      return cv;
+    }
+
+    const wirtHairs=['#1a1a1a','#5a3a1a','#8a5a2a','#c04040'];
+    const wirtDialogs=[
+      ['Willkommen im '+kneipeName+'!','Hier trinken nur echte Sechzger!','Was darfs sein? Weißbier?','Hefeweizen? Oder a Helles?','EINMAL LÖWE, IMMER LÖWE!','Nimm dir ein Bier, Löwe!'],
+      ['Servas! Ich bin der Wirt!','Das '+kneipeName+' ist Kult!','Hier hängen 1860-Fahnen','seit Jahrzehnten an der Wand!','Trink ein Weißbier auf die Löwen!','Hier, eins aufs Haus!'],
+      ['Griaß di im '+kneipeName+'!','Tätowiert? Klar! Ein Löwe','auf der Brust, 1860 am Arm!','Jeder echte Fan hat Tinte!','Hier, ein Weißbier für dich!','Prost, Löwe!'],
+      ['Beim '+kneipeName+' gibts','nur Löwen-Bier! Kein roter','Schmarrn kommt hier rein!','Letzte Woche hab ich einen','Bayern-Fan rausgeworfen! Haha!','Trink eins auf mich!']
+    ];
+
+    npcs.push({x:5,y:3,sprite:makeWirtSprite(wirtHairs[idx-5]),
+      dialog:wirtDialogs[idx-5],
+      name:'Wirt '+kneipeName,shop:{itemId:'weissbier',price:0,currency:null}});
+
+    // Stammgäste (regulars)
+    npcs.push({x:4,y:5,sprite:makeNPCSprite('#081820','#2a6aac','#e8e8e0'),
+      dialog:['Prost! Auf die Sechzger!','Ich bin hier Stammgast!','Jeden Spieltag sitzen wir','hier und schauen das Spiel!'],
+      name:'Stammgast'});
+    npcs.push({x:8,y:5,sprite:makeNPCSprite('#5a3a1a','#2a6aac','#081820'),
+      dialog:['Weißt du noch, 1966?','Die Meisterschaft! Das war','der größte Tag! Rudi Brunnenmeier','war ein GOTT!'],
+      name:'Alter Löwe'});
+    npcs.push({x:3,y:8,sprite:makeNPCSprite('#e8d840','#1a1a1a','#2a6aac'),
+      dialog:['Ich hab hier schon drei','Weißbier intus! Aber egal,','SECHZIG! SECHZIG!','Die Löwen sterben nie!'],
+      name:'Biertrinker'});
+    npcs.push({x:7,y:8,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#e8e8e0'),
+      dialog:['Schau mal die Wand!','Alles voller 1860-Fahnen!','Und Fotos von der Meisterschaft!','Das hier ist heiliger Boden!'],
+      name:'Fan Michi'});
+    npcs.push({x:5,y:11,sprite:makeNPCSprite('#c0a060','#2a6aac','#1a3a5c'),
+      dialog:['Der Wirt hier ist der Beste!','Tätowierter Löwe auf dem Arm!','Und das Bier schmeckt!','Willst du auch eins?'],
+      name:'Sechzger Flo'});
+    npcs.push({x:9,y:11,sprite:makeNPCSprite('#081820','#2a6aac','#081820'),
+      dialog:['Ich war letztens im Grünwalder!','Die Stimmung war BRUTAL!','Giesing lebt und atmet','TSV 1860! Prost!'],
+      name:'Ultra Hannes'});
+  }
+
   return{tiles:map,npcs,portals,arenaPos,idx};
 }
 
@@ -1132,7 +1324,7 @@ const ARENA_LEADERS=[
 let MAPS=[];
 function initMaps(){
   MAPS=[];
-  for(let i=0;i<5;i++)MAPS.push(generateMap(i));
+  for(let i=0;i<9;i++)MAPS.push(generateMap(i));
 }
 
 // === AUDIO ===
@@ -1531,7 +1723,8 @@ function drawOverworld(){
 
   const isSepia=GS.map===1;
 
-  CTX.fillStyle=isSepia?'#5a4a2a':'#1a5a1a';
+  const isInterior=GS.map>=5;
+  CTX.fillStyle=isSepia?'#5a4a2a':isInterior?'#1a1a1a':'#1a5a1a';
   CTX.fillRect(0,0,W,H);
 
   // Draw tiles
@@ -1549,6 +1742,11 @@ function drawOverworld(){
       else if(tile===6)tc=TILE_CACHE.portal;
       else if(tile===7)tc=isSepia?TILE_CACHE.arena_s:TILE_CACHE.arena;
       else if(tile===8)tc=TILE_CACHE.sign;
+      else if(tile===9)tc=TILE_CACHE.floor;
+      else if(tile===10)tc=TILE_CACHE.bar;
+      else if(tile===11)tc=TILE_CACHE.table;
+      else if(tile===12)tc=TILE_CACHE.keg;
+      else if(tile===13)tc=TILE_CACHE.wall_interior;
       if(tc)CTX.drawImage(tc,sx,sy);
     }
   }
@@ -1582,7 +1780,7 @@ function drawOverworld(){
   }
 
   // Map name overlay
-  const mapNames=['Giesing','Alter Bot. Garten 1848','Grünwalder 1966','Olympia 1994','Grünwalder Neu 2024'];
+  const mapNames=['Giesing','Alter Bot. Garten 1848','Grünwalder 1966','Olympia 1994','Grünwalder Neu 2024','Schönstüberl','Trepperlwirt','Kastaniengarten','Kyso'];
   drawBox(2,2,140,16,'rgba(8,24,32,0.8)');
   drawText(mapNames[GS.map]||'???',6,14,'#e8d840',9);
 
