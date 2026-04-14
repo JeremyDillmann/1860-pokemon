@@ -1277,74 +1277,28 @@ function generateMap(idx){
       dialog:wirtDialogs[idx-5],
       name:'Wirt '+kneipeName,shop:{itemId:'weissbier',price:0,currency:null}});
 
-    // Stammgäste (regulars) - derbe Sprüche!
-    const stammgastDialogs=[
-      // Set 0
-      [
-        {x:4,y:5,hair:'#081820',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['OIDA! Schon wieder nüchtern!','Wirt! WEISSBIER! SOFORT!','Letzte Woche hab ich nem','Bayern-Fan ins Bier gespuckt!','Der hat nix gemerkt! HAHAHA!','SECHZIG bis ich KREPIER!'],name:'Sauf-Schorsch'},
-        {x:8,y:5,hair:'#5a3a1a',shirt:'#2a6aac',pants:'#081820',
-          dialog:['1966! MEISTER! Weißt was da los','war?! Mein Opa hat DREI Tage','durchgesoffen! Hat seinen Job','verloren und es war ihm SCHEISSEGAL!','DAS ist Leidenschaft!','EINMAL LÖWE!'],name:'Opa Gustl'},
-        {x:3,y:8,hair:'#e8d840',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['*rülps* Mein SIEBTES Weißbier!','Wenn hier ein Roter reinkommt','KOTZE ICH IHM AUF DIE SCHUHE!','Ist mir schon zweimal passiert!','Der Wirt hat mich gefeiert!','PROST DU SAU!'],name:'Kotz-Karli'},
-        {x:7,y:8,hair:'#8a5a2a',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['Siehst du den Riss in der Wand?','Da hab ich letztens nen','Bayern-Fan reingeschädelt!','Seitdem heißt die Stelle','DIE ROTE DELLE! HAHAHA!','Der Wirt hats eingerahmt!'],name:'Brecher Michi'},
-        {x:5,y:11,hair:'#c0a060',shirt:'#2a6aac',pants:'#1a3a5c',
-          dialog:['Ich hab SECHZIG auf den ARSCH','tätowiert! Zeig ich jedem!','Willst du sehen?! NEIN?!','Zu spät! *dreht sich um*','HAHAHAHA!','Einmal Löwe, ÜBERALL Löwe!'],name:'Tattoo-Flo'},
-        {x:9,y:11,hair:'#081820',shirt:'#2a6aac',pants:'#081820',
-          dialog:['Gestern im Grünwalder!','Ein Bayern-Fan hat sich','ins Löwen-Block verirrt!','Der ist NACKT wieder','rausgelaufen! OHNE KLAMOTTEN!','Seinen Schal hab ICH jetzt!'],name:'Ultra Hannes'}
-      ],
-      // Set 1
-      [
-        {x:4,y:5,hair:'#c04040',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['Weißt was geil war?!','Hab gestern nen Bayern-Aufkleber','von ner Laterne gekratzt','und meinem Hund zum','DRAUFPISSEN hingelegt!','FRISS DAS, ROTER!'],name:'Kratzer-Klaus'},
-        {x:8,y:5,hair:'#081820',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['Mein Sohn heißt SECHZIG!','Standesamt wollte nicht!','Hab so lang GEBRÜLLT bis','die es eingetragen haben!','Seine Schwester heißt GIESING!','FAMILIENSACHE!'],name:'Verrückter Vroni-Vater'},
-        {x:3,y:8,hair:'#5a3a1a',shirt:'#2a6aac',pants:'#081820',
-          dialog:['ICH SCHWÖRE DIR!','Wenn 1860 aufsteigt RENN ICH','NACKT durch die Leopoldstraße!','Hab den Bayern-Fans schon','ne Einladung geschickt!','DIE WERDEN SCHAUEN!'],name:'Nackt-Norbert'},
-        {x:7,y:8,hair:'#e8d840',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['Mein Auto? Komplett blau!','Felgen? LÖWENKÖPFE!','Hupe? Spielt die HYMNE!','Ein Bayern-Fan hat reingeschaut','und ist WEINEND weggerannt!','BESTES INVESTMENT EVER!'],name:'Auto-Andi'},
-        {x:5,y:11,hair:'#8a5a2a',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['Letzten Sonntag beim Derby!','Hab nem Bayern-Ultra so laut','ins Ohr gebrüllt dass er','sein Bier verschüttet hat!','AUF SEIN EIGENES TRIKOT!','Karma, oida! KARMA!'],name:'Brüll-Basti'},
-        {x:9,y:11,hair:'#c0a060',shirt:'#2a6aac',pants:'#081820',
-          dialog:['Wirt! NOCH EINS!','Und wenn ich hier umkipp','BEGRABT MICH IN GIESING!','Mit meinem Löwen-Schal als','LEICHENTUCH!','Prost auf den geilsten Verein!'],name:'Friedhofs-Fritz'}
-      ],
-      // Set 2
-      [
-        {x:4,y:5,hair:'#081820',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['Hab letztens nen Bayern-Fan','gefragt ob er sich SCHÄMT!','Der hat angefangen zu HEULEN!','Hat gesagt sein Papa hat ihn','GEZWUNGEN Fan zu werden!','Armes Schwein! Trotzdem RAUS!'],name:'Therapie-Thommy'},
-        {x:8,y:5,hair:'#5a3a1a',shirt:'#2a6aac',pants:'#1a3a5c',
-          dialog:['MEINE LEBER GEHÖRT SECHZIG!','Jeden Spieltag zehn Weißbier!','Mein Arzt sagt ich soll','aufhören! HAB IHN GEWECHSELT!','Der neue ist auch Sechzger!','Der versteht das!'],name:'Leber-Luggi'},
-        {x:3,y:8,hair:'#e8d840',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['Ich hab in meiner Wohnung','NUR 1860-Sachen! Klopapier?','LÖWEN-MUSTER! Bettwäsche?','BLAU-WEISS! Meine Freundin','ist ausgezogen! WAR MIR EGAL!','Die war eh Bayern-Fan!'],name:'Deko-Didi'},
-        {x:7,y:8,hair:'#8a5a2a',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['WISST IHR WAS?!','Ich hab nen LÖWEN als Haustier!','OK es ist ne Katze...','aber ich hab sie LÖWE GENANNT!','Und sie HASST rote Sachen!','GUT ERZOGEN!'],name:'Katzen-Kurti'},
-        {x:5,y:11,hair:'#c0a060',shirt:'#2a6aac',pants:'#081820',
-          dialog:['Mein Hochzeitstanz? SECHZGER!','Meine Frau wollte Walzer!','HAB ICH ABGELEHNT!','Wir haben zu EINMAL LÖWE','getanzt und der DJ hat','MITGESUNGEN! Geiler Tag!'],name:'Tanz-Toni'},
-        {x:9,y:11,hair:'#081820',shirt:'#2a6aac',pants:'#081820',
-          dialog:['Letztens im Supermarkt!','Hab nen Typen gesehen mit','rotem Schal! Hab meinen','Einkaufswagen in seinen','REINGERAMMT! Aus Versehen!','Oder auch nicht! HAHAHA!'],name:'Ramm-Rudi'}
-      ],
-      // Set 3
-      [
-        {x:4,y:5,hair:'#c04040',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['OIDA ICH BIN SO VOLL!','Aber das ist mir EGAL weil','SECHZIG SECHZIG SECHZIG!','Mein Chef hat angerufen!','Hab ihm ins Telefon GEBRÜLLT:','EINMAL LÖWE! Bin jetzt arbeitslos!'],name:'Job-Jürgen'},
-        {x:8,y:5,hair:'#081820',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['Wusstest du dass ich JEDEN','Bayern-Fan in Giesing kenne?','Nicht weil ich sie mag!','Sondern weil ich eine LISTE','führe! MIT FOTOS!','Die werden BEOBACHTET!'],name:'Listen-Loisl'},
-        {x:3,y:8,hair:'#5a3a1a',shirt:'#2a6aac',pants:'#081820',
-          dialog:['Mein Hund heißt RUDI!','Nach Brunnenmeier! Wenn der','nen Bayern-Fan sieht BELLT','der wie verrückt!','Guter Hund! BESTER HUND!','Kriegst auch ein Leckerli!'],name:'Hunde-Hans'},
-        {x:7,y:8,hair:'#e8d840',shirt:'#2a6aac',pants:'#e8e8e0',
-          dialog:['ICH WETTE MIT DIR!','Wenn 1860 nächstes Jahr nicht','aufsteigt TRINK ICH EIN','GANZES FASS WEISSBIER!','Und wenn sie aufsteigen?','TRINK ICH ZWEI! WIN-WIN!'],name:'Wett-Wastl'},
-        {x:5,y:11,hair:'#8a5a2a',shirt:'#1a1a1a',pants:'#2a6aac',
-          dialog:['Hab mir GIESING auf die','STIRN tätowieren lassen!','Beim Vorstellungsgespräch','hat der Chef nur gesagt:','EINMAL LÖWE? Und hat mich','SOFORT EINGESTELLT! Ehrenmann!'],name:'Stirn-Stefan'},
-        {x:9,y:11,hair:'#c0a060',shirt:'#2a6aac',pants:'#081820',
-          dialog:['WEISSBIER NUMMER ZWÖLF!','Morgen früh um sechs hab ich','Arbeit! SCHEISS DRAUF!','Für Sechzig opfer ich ALLES!','Schlaf? ÜBERBEWERTET!','SECHZIG LEBT!'],name:'Nachtschicht-Nico'}
-      ]
-    ];
-    const sIdx=idx-5;
-    stammgastDialogs[sIdx].forEach(sg=>{
-      npcs.push({x:sg.x,y:sg.y,sprite:makeNPCSprite(sg.hair,sg.shirt,sg.pants),
-        dialog:sg.dialog,name:sg.name});
-    });
+    // Die legendären Stammgäste - in JEDER Kneipe!
+    npcs.push({x:4,y:5,sprite:makeNPCSprite('#081820','#2a6aac','#e8e8e0'),
+      dialog:['OIDA! ICH BIN DER SAUF-SCHORSCH!','Ich sauf hier seit ICH DENKEN KANN!','Letzte Woche hab ich nem Bayern-Fan','DIREKT INS BIER GESPUCKT!','Der hat weitergetrunken! HAHAHA!','Hat eh nach Verlierer geschmeckt!','SECHZIG bis ich KREPIER!','Wirt! NOCH EINS! SOFORT!'],
+      name:'Sauf-Schorsch'});
+    npcs.push({x:8,y:5,sprite:makeNPCSprite('#e8d840','#1a1a1a','#2a6aac'),
+      dialog:['*RÜÜÜÜLPS* ICH BIN KOTZ-KARLI!','Mein NEUNTES Weißbier heute!','Wenn hier ein Roter reinkommt','KOTZE ICH IHM AUF DIE SCHUHE!','Ist mir DREIMAL passiert!','Einmal auf nen Polizisten!','Der war auch Sechzger, der hat','GELACHT! Prost du GEILE SAU!'],
+      name:'Kotz-Karli'});
+    npcs.push({x:3,y:8,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#e8e8e0'),
+      dialog:['ICH BIN BRECHER MICHI!','Siehst den Riss in der Wand?','DA HAB ICH NEN BAYERN-FAN','REINGESCHÄDELT! Mit der Birne!','Der Wirt hats EINGERAHMT!','Steht jetzt ROTE DELLE dran!','Willst du auch eine Delle?!','Nee Spaß! Du bist ja SECHZGER!'],
+      name:'Brecher Michi'});
+    npcs.push({x:7,y:8,sprite:makeNPCSprite('#c0a060','#2a6aac','#1a3a5c'),
+      dialog:['TATTOO-FLO hier!','Ich hab SECHZIG auf den ARSCH','tätowiert! Zeig ich JEDEM!','Im Freibad! Beim Arzt!','Auf der Arbeit!','Mein Chef hat GEHEULT vor Lachen!','Willst du sehen?! Zu spät!','*dreht sich um* HAHAHAHA!'],
+      name:'Tattoo-Flo'});
+    npcs.push({x:5,y:11,sprite:makeNPCSprite('#5a3a1a','#2a6aac','#081820'),
+      dialog:['NACKT-NORBERT! Das bin ICH!','Wenn 1860 aufsteigt RENN ICH','NACKT durch die Leopoldstraße!','Hab den Bayern-Fans schon','ne EINLADUNG geschickt!','MIT FOTO! Unzensiert!','Die haben die POLIZEI gerufen!','WAR MIR SCHEISSEGAL!'],
+      name:'Nackt-Norbert'});
+    npcs.push({x:9,y:11,sprite:makeNPCSprite('#c04040','#2a6aac','#e8e8e0'),
+      dialog:['JOB-JÜRGEN! ARBEITSLOS!','Mein Chef hat WÄHREND dem Spiel','angerufen! Hab ins Telefon','GEBRÜLLT: EINMAL LÖWE!!!','Er so: Sie sind GEFEUERT!','Ich so: SCHEISS DRAUF! SECHZIG!','Seitdem sauf ich HAUPTBERUFLICH!','Beste Entscheidung MEINES LEBENS!'],
+      name:'Job-Jürgen'});
+    npcs.push({x:12,y:5,sprite:makeNPCSprite('#8a5a2a','#2a6aac','#e8e8e0'),
+      dialog:['KATZEN-KURTI! Meine Katze','heißt LÖWE! Ist ne Perserkatze!','Die HASST rote Sachen!','Wenn sie nen roten Schal sieht','PISST SIE DRAUF! Jeden Mal!','Hab sie einem Bayern-Fan gezeigt!','Der ist SCHREIEND weggerannt!','BESTE KATZE DER WELT!'],
+      name:'Katzen-Kurti'});
   }
 
   return{tiles:map,npcs,portals,arenaPos,idx};
@@ -1854,18 +1808,7 @@ function updateOverworld(){
     if(nx>=0&&nx<MW&&ny>=0&&ny<MH){
       const tile=map.tiles[ny][nx];
 
-      // Check NPC collision
-      let npcHit=null;
-      map.npcs.forEach(npc=>{
-        if(npc.x===nx&&npc.y===ny){
-          if(!npc.battle||!GS.npcsDefeated[npc.defKey])npcHit=npc;
-        }
-      });
-
-      if(npcHit){
-        // Face NPC
-        GS.moveTimer=8;
-      } else if(!BLOCKED.has(tile)){
+      if(!BLOCKED.has(tile)){
         GS.px=nx;GS.py=ny;
         GS.pwalk=(GS.pwalk+1)%2;
         GS.moveTimer=6;
